@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laboratory of Cell Function Regulation | 고려대학교 생명공학부 유승권 교수 연구실</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ku: {
+              crimson: '#8B0029',
+              dark: '#5E001B',
+              light: '#A81C44',
+              tint: '#FAF3F5',
+              gray: '#F6F6F5',
+              border: '#DCDCDC',
+              ink: '#222222',
+              sub: '#555555'
+            }
+          },
+          fontFamily: {
+            sans: ['"Noto Sans KR"', '"Malgun Gothic"', '"Apple SD Gothic Neo"', '"Inter"', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", "Inter", system-ui, sans-serif;
+      background-color: #FFFFFF;
+      color: #222222;
+      overflow-x: hidden;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .pc-container {
+      max-width: 1180px;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+    .nav-item {
+      position: relative;
+      padding: 20px 2px;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      color: #333333;
+      transition: color 0.15s ease;
+    }
+    .nav-item:hover {
+      color: #8B0029;
+    }
+    .nav-item.active {
+      color: #8B0029;
+    }
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 3px;
+      background-color: #8B0029;
+    }
+    .hero-banner {
+      background: linear-gradient(112deg, #1E0810 0%, #5B001B 58%, #7B0B2A 100%);
+    }
+    .sub-banner {
+      background: linear-gradient(90deg, #270A13 0%, #6A0020 100%);
+    }
+    .board-table th {
+      background-color: #F7F7F7;
+      border-top: 2px solid #8B0029;
+      border-bottom: 1px solid #D4D4D4;
+      font-weight: 600;
+      color: #222222;
+      text-align: left;
+    }
+    .board-table td {
+      border-bottom: 1px solid #E5E5E5;
+    }
+    .toast-enter {
+      animation: fadeUp 0.18s ease-out forwards;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #kuCampusMap {
+      height: 320px;
+      width: 100%;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Institutional Utility Bar -->
+  <div class="bg-[#202020] text-[#CCCCCC] text-[11.5px] border-b border-black">
+    <div class="pc-container h-8 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2.5 truncate">
+        <a href="https://www.korea.ac.kr/" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">Korea University</a>
+        <span class="text-zinc-600">|</span>
+        <a href="https://lifesci.korea.ac.kr/" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors hidden sm:inline">College of Life Sciences &amp; Biotechnology</a>
+        <span class="text-zinc-600 hidden sm:inline">|</span>
+        <a href="https://bio.korea.ac.kr/" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors" data-i18n="utilDept">생명공학부</a>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <a href="https://faculty.korea.ac.kr/kufaculty/CellFunctionRegulation/index.do" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors hidden md:inline">KU Faculty</a>
+        <a href="https://pure.korea.ac.kr/en/persons/seungkwon-you/" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors hidden md:inline">KU Pure</a>
+        <a href="https://scholar.korea.ac.kr/researcher/dbed18ed-6333-4c4d-a704-3d4793ae3436/item" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors hidden lg:inline">ScholarWorks</a>
+        <button id="langToggleBtn" type="button" class="text-white font-semibold hover:text-rose-200 cursor-pointer border-l border-zinc-600 pl-3">
+          <span id="langToggleLabel">ENGLISH</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main PC Navigation Header -->
+  <header class="bg-white border-b border-[#DCDCDC] sticky top-0 z-40">
+    <div class="pc-container flex items-center justify-between gap-4">
+      <a href="#/home" data-route="home" class="route-link py-3.5 flex items-center gap-3 min-w-0">
+        <img
+          src="https://www.korea.ac.kr/sites/ko/images/contents/11_signiture_2.png"
+          alt="Korea University"
+          referrerpolicy="no-referrer"
+          class="h-8 w-auto object-contain shrink-0 hidden sm:block"
+          onerror="this.style.display='none'; document.getElementById('kuTextCrest').style.display='inline-block';"
+        />
+        <span id="kuTextCrest" style="display:none;" class="px-2 py-1 bg-ku-crimson text-white text-[11px] font-bold tracking-wider shrink-0">
+          KOREA UNIV.
+        </span>
+        <span class="hidden sm:inline-block h-6 w-px bg-zinc-300 shrink-0"></span>
+        <div class="min-w-0 leading-tight">
+          <div class="text-[15.5px] font-bold text-[#111111] tracking-tight truncate" data-i18n="headerLabName">세포기능조절실험실</div>
+          <div class="text-[11px] text-[#666666] truncate">Cell Function Regulation Lab</div>
+        </div>
+      </a>
+
+      <!-- Single-Line Desktop Menu (Standard Top Bio Lab IA) -->
+      <nav class="hidden lg:flex items-center gap-5 xl:gap-6 shrink-0" aria-label="Main Menu">
+        <a href="#/home" data-route="home" class="route-link nav-item active" data-i18n="menuHome">HOME</a>
+        <a href="#/professor" data-route="professor" class="route-link nav-item" data-i18n="menuProf">PROFESSOR</a>
+        <a href="#/research" data-route="research" class="route-link nav-item" data-i18n="menuResearch">RESEARCH</a>
+        <a href="#/members" data-route="members" class="route-link nav-item" data-i18n="menuMembers">MEMBERS</a>
+        <a href="#/publications" data-route="publications" class="route-link nav-item" data-i18n="menuPubs">PUBLICATIONS</a>
+        <a href="#/news" data-route="news" class="route-link nav-item" data-i18n="menuNews">NEWS &amp; PRESS</a>
+        <a href="#/join" data-route="join" class="route-link nav-item" data-i18n="menuJoin">JOIN US</a>
+        <a href="#/contact" data-route="contact" class="route-link nav-item" data-i18n="menuContact">CONTACT</a>
+      </nav>
+
+      <!-- Mobile Menu Button -->
+      <button id="mobileMenuBtn" type="button" class="lg:hidden p-2 text-zinc-700 hover:bg-zinc-100 rounded" aria-label="Menu" aria-expanded="false">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Mobile Dropdown Menu -->
+    <div id="mobileMenu" class="hidden lg:hidden bg-white border-t border-zinc-200 px-5 py-2 space-y-1 shadow-md">
+      <a href="#/home" data-route="home" class="route-link mobile-nav-link block py-2 text-sm font-semibold text-zinc-800 hover:text-ku-crimson" data-i18n="menuHome">HOME</a>
+      <a href="#/professor" data-route="professor" class="route-link mobile-nav-link block py-2 text-sm font-semibold text-zinc-800 hover:text-ku-crimson" data-i18n="menuProf">PROFESSOR</a>
+      <a href="#/research" data-route="research" class="route-link mobile-nav-link block py-2 text-sm font-semibold text-zinc-800 hover:text-ku-crimson" data-i18n="menuResearch">RESEARCH</a>
+      <a href="#/members" data-route="members" class="route-link mobile-nav-link block py-2 text-sm font-semibold text-zinc-800 hover:text-ku-crimson" data-i18n="menuMembers">MEMBERS</a>
+      <a href="#/publications" data-route="publications" class="route-link mobile-nav-link block py-2 text-sm font-semibold text-zinc-800 hover:text-ku-crimson" data-i18n="menuPubs">PUBLICATIONS</a>
+      <a href="#/news" data-route="news" class="route-link mobile-nav-link block py-2 text-sm font-semibold text-zinc-800 hover:text-ku-crimson" data-i18n="menuNews">NEWS &amp; PRESS</a>
+      <a href="#/join" data-route="join" class="route-link mobile-nav-link block py-2 text-sm font-semibold text-zinc-800 hover:text-ku-crimson" data-i18n="menuJoin">JOIN US</a>
+      <a href="#/contact" data-route="contact" class="route-link mobile-nav-link block py-2 text-sm font-semibold text-zinc-800 hover:text-ku-crimson" data-i18n="menuContact">CONTACT</a>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 1: HOME                                                          -->
+  <!-- ===================================================================== -->
+  <main id="page-home" class="page-view">
+    <section class="hero-banner text-white">
+      <div class="pc-container py-14 sm:py-16 lg:py-20">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div class="lg:col-span-8">
+            <div class="text-xs tracking-[0.16em] uppercase text-rose-200 font-semibold mb-3">
+              Korea University · Department of Biotechnology
+            </div>
+            <h1 class="text-2xl sm:text-4xl font-bold tracking-tight leading-snug mb-3">
+              Laboratory of Cell Function Regulation
+            </h1>
+            <p class="text-base sm:text-lg text-rose-100 font-medium mb-5" data-i18n="homeBannerSub">
+              고려대학교 생명공학부 유승권 교수 · 세포기능조절실험실 (CFR Lab)
+            </p>
+            <p class="text-[14px] text-zinc-200 leading-relaxed max-w-2xl mb-7" data-i18n="homeBannerDesc">
+              유도만능줄기세포(iPSC) 및 직접교차분화(iNSC, iOPC, iNPC) 원천기술, 저분자 화합물 기반 신경·전구세포 분화 제어, 줄기세포 분비분자(Secretome) 무세포 재생의약 및 모듈형 나노젤·하이드로겔 전달 시스템을 연구합니다.
+            </p>
+            <div class="flex flex-wrap gap-3">
+              <a href="#/research" data-route="research" class="route-link inline-flex items-center gap-1.5 px-5 py-2.5 bg-white text-ku-crimson hover:bg-rose-50 text-xs sm:text-sm font-bold transition-colors">
+                <span data-i18n="homeBtnResearch">연구분야 소개</span>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              </a>
+              <a href="#/publications" data-route="publications" class="route-link inline-flex items-center gap-1.5 px-5 py-2.5 border border-white/50 hover:bg-white/10 text-white text-xs sm:text-sm font-semibold transition-colors">
+                <span data-i18n="homeBtnPubs">논문 목록 (35편)</span>
+              </a>
+              <a href="#/join" data-route="join" class="route-link inline-flex items-center gap-1.5 px-5 py-2.5 border border-white/30 hover:bg-white/10 text-rose-100 text-xs sm:text-sm font-semibold transition-colors">
+                <span data-i18n="homeBtnJoin">대학원생·학부연구생 모집</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Right Compact PI Directory Card -->
+          <div class="lg:col-span-4 bg-black/25 border border-white/15 p-5">
+            <div class="flex items-center gap-4">
+              <div class="w-20 h-24 bg-white/10 border border-white/20 overflow-hidden shrink-0">
+                <img
+                  src="https://faculty.korea.ac.kr/_res/kufaculty/img/professor/yooseungkwon.png"
+                  alt="유승권 교수"
+                  referrerpolicy="no-referrer"
+                  class="w-20 h-24 object-cover object-top"
+                  onerror="handleProfPhotoError(this)"
+                />
+              </div>
+              <div class="min-w-0">
+                <div class="text-[11px] uppercase tracking-wider text-rose-200 font-semibold">Principal Investigator</div>
+                <div class="text-base font-bold text-white mt-0.5" data-i18n="profName">유승권 교수</div>
+                <div class="text-xs text-zinc-300">Seungkwon You, Ph.D.</div>
+                <a href="#/professor" data-route="professor" class="route-link inline-block mt-2 text-xs text-rose-200 hover:text-white underline" data-i18n="viewProfProfile">
+                  교수 약력 보기 →
+                </a>
+              </div>
+            </div>
+            <div class="mt-4 pt-3.5 border-t border-white/15 text-xs text-zinc-200 space-y-1">
+              <div><span class="text-zinc-400">Office:</span> 생명과학관 서관 314호 (02-3290-3057)</div>
+              <div><span class="text-zinc-400">Lab:</span> 서관 321, 325~328호 (02-3290-3493)</div>
+              <div><span class="text-zinc-400">Email:</span> <a href="mailto:bioseung@korea.ac.kr" class="text-white hover:underline font-medium">bioseung@korea.ac.kr</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOME Section 1: Research Areas -->
+    <section class="py-12 border-b border-[#E5E5E5] bg-white">
+      <div class="pc-container">
+        <div class="flex items-end justify-between border-b-2 border-[#222222] pb-3 mb-7">
+          <h2 class="text-lg sm:text-xl font-bold text-[#111111]" data-i18n="homeResHeading">RESEARCH AREAS</h2>
+          <a href="#/research" data-route="research" class="route-link text-xs font-semibold text-ku-crimson hover:underline" data-i18n="moreLink">MORE +</a>
+        </div>
+        <div id="homeResearchGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- HOME Section 2: Recent Publications (Left) + News & Press / Recruitment (Right) -->
+    <section class="py-12 bg-[#F8F8F7] border-b border-[#E5E5E5]">
+      <div class="pc-container">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div class="lg:col-span-7 bg-white border border-[#E2E2E2] p-6">
+            <div class="flex items-center justify-between border-b border-[#222222] pb-2.5 mb-4">
+              <h2 class="text-base font-bold text-[#111111]" data-i18n="homeRecentPubs">RECENT PUBLICATIONS</h2>
+              <a href="#/publications" data-route="publications" class="route-link text-xs font-semibold text-ku-crimson hover:underline" data-i18n="moreLink">MORE +</a>
+            </div>
+            <ul id="homeRecentPubList" class="divide-y divide-[#EEEEEE]">
+              <!-- Populated by JS -->
+            </ul>
+          </div>
+
+          <div class="lg:col-span-5 space-y-6">
+            <div class="bg-white border border-[#E2E2E2] p-6">
+              <div class="flex items-center justify-between border-b border-[#222222] pb-2.5 mb-4">
+                <h2 class="text-base font-bold text-[#111111]" data-i18n="homeNoticeHeading">NEWS, AWARDS &amp; PRESS</h2>
+                <a href="#/news" data-route="news" class="route-link text-xs font-semibold text-ku-crimson hover:underline" data-i18n="moreLink">MORE +</a>
+              </div>
+              <ul id="homeNoticeList" class="divide-y divide-[#EEEEEE] text-[13px]">
+                <!-- Populated by JS -->
+              </ul>
+            </div>
+
+            <div class="bg-white border border-[#E2E2E2] p-6">
+              <div class="flex items-center justify-between border-b border-[#222222] pb-2.5 mb-3">
+                <h2 class="text-base font-bold text-[#111111]" data-i18n="homeJoinBoxTitle">OPEN POSITIONS</h2>
+                <a href="#/join" data-route="join" class="route-link text-xs font-semibold text-ku-crimson hover:underline" data-i18n="moreLink">MORE +</a>
+              </div>
+              <p class="text-[13px] text-[#444444] leading-relaxed mb-3" data-i18n="homeJoinBoxDesc">
+                세포 역분화, 줄기세포 분화, 무세포 재생의약 및 생체재료 전달 연구에 관심 있는 석·박사통합과정, 석사과정, 박사후연구원 및 학부연구생을 상시 모집합니다.
+              </p>
+              <div class="flex items-center gap-3 text-xs font-semibold">
+                <a href="#/join" data-route="join" class="route-link text-ku-crimson hover:underline" data-i18n="homeJoinGuideLink">지원 안내 및 FAQ →</a>
+                <span class="text-zinc-300">|</span>
+                <a href="#/contact" data-route="contact" class="route-link text-[#333333] hover:text-ku-crimson" data-i18n="homeMapLink">오시는 길 →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOME Section 3: Funding Agencies & Supporting Institutions Strip -->
+    <section class="py-10 bg-white">
+      <div class="pc-container">
+        <div class="text-xs font-bold uppercase tracking-widest text-[#777777] mb-4" data-i18n="fundingStripTitle">FUNDING AGENCIES &amp; SUPPORTING INSTITUTIONS</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-center">
+          <div class="border border-[#E5E5E5] bg-[#FAFAFA] px-3 py-3.5 text-xs font-semibold text-[#333333]">범부처재생의료기술개발사업단<div class="text-[10.5px] font-normal text-[#777777] mt-0.5">KFRM</div></div>
+          <div class="border border-[#E5E5E5] bg-[#FAFAFA] px-3 py-3.5 text-xs font-semibold text-[#333333]">한국연구재단<div class="text-[10.5px] font-normal text-[#777777] mt-0.5">NRF Korea</div></div>
+          <div class="border border-[#E5E5E5] bg-[#FAFAFA] px-3 py-3.5 text-xs font-semibold text-[#333333]">고려대학교<div class="text-[10.5px] font-normal text-[#777777] mt-0.5">Korea University</div></div>
+          <div class="border border-[#E5E5E5] bg-[#FAFAFA] px-3 py-3.5 text-xs font-semibold text-[#333333]">한국해양과학기술원<div class="text-[10.5px] font-normal text-[#777777] mt-0.5">KIOST</div></div>
+          <div class="border border-[#E5E5E5] bg-[#FAFAFA] px-3 py-3.5 text-xs font-semibold text-[#333333]">국가줄기세포은행<div class="text-[10.5px] font-normal text-[#777777] mt-0.5">National Stem Cell Bank</div></div>
+          <div class="border border-[#E5E5E5] bg-[#FAFAFA] px-3 py-3.5 text-xs font-semibold text-[#333333]">동물분자생체공학연구소<div class="text-[10.5px] font-normal text-[#777777] mt-0.5">IAMB · Korea Univ.</div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 2: PROFESSOR                                                     -->
+  <!-- ===================================================================== -->
+  <section id="page-professor" class="page-view hidden">
+    <div class="sub-banner text-white">
+      <div class="pc-container py-9">
+        <div class="text-[11px] text-rose-200 tracking-wider uppercase mb-1">HOME &gt; PROFESSOR</div>
+        <h1 class="text-2xl sm:text-3xl font-bold" data-i18n="profPageTitle">지도교수 소개 (Principal Investigator)</h1>
+      </div>
+    </div>
+
+    <div class="pc-container py-12">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        <div class="lg:col-span-4 border border-[#DCDCDC] bg-[#FAFAFA] p-6">
+          <div class="w-40 h-52 mx-auto bg-white border border-[#DCDCDC] overflow-hidden mb-5">
+            <img
+              src="https://faculty.korea.ac.kr/_res/kufaculty/img/professor/yooseungkwon.png"
+              alt="유승권 교수"
+              referrerpolicy="no-referrer"
+              class="w-40 h-52 object-cover object-top"
+              onerror="handleProfPhotoError(this)"
+            />
+          </div>
+          <div class="text-center mb-5">
+            <h2 class="text-xl font-bold text-[#111111]" data-i18n="profName">유승권 교수</h2>
+            <p class="text-sm font-semibold text-ku-crimson mt-0.5">Seungkwon You, Ph.D.</p>
+            <p class="text-xs text-[#666666] mt-1" data-i18n="profRole">고려대학교 생명과학대학 생명공학부 정교수</p>
+          </div>
+
+          <table class="w-full text-xs border-t border-[#DCDCDC]">
+            <tbody class="divide-y divide-[#EAEAEA]">
+              <tr>
+                <th class="py-2.5 text-left text-[#666666] font-semibold w-20">Office</th>
+                <td class="py-2.5 text-[#222222]" data-i18n="profOfficeShort">생명과학관 서관 314호</td>
+              </tr>
+              <tr>
+                <th class="py-2.5 text-left text-[#666666] font-semibold">Lab</th>
+                <td class="py-2.5 text-[#222222]">서관 321, 325~328호</td>
+              </tr>
+              <tr>
+                <th class="py-2.5 text-left text-[#666666] font-semibold">Tel</th>
+                <td class="py-2.5 text-[#222222]">02-3290-3057 (Lab: 3493)</td>
+              </tr>
+              <tr>
+                <th class="py-2.5 text-left text-[#666666] font-semibold">Fax</th>
+                <td class="py-2.5 text-[#222222]">02-3290-3507</td>
+              </tr>
+              <tr>
+                <th class="py-2.5 text-left text-[#666666] font-semibold">E-mail</th>
+                <td class="py-2.5">
+                  <div class="flex items-center justify-between gap-2">
+                    <a href="mailto:bioseung@korea.ac.kr" class="text-ku-crimson font-semibold hover:underline">bioseung@korea.ac.kr</a>
+                    <button id="copyEmailBtn" type="button" class="px-2 py-0.5 border border-zinc-300 bg-white hover:border-ku-crimson text-[11px] text-zinc-600 hover:text-ku-crimson cursor-pointer" data-i18n="copyBtn">복사</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="mt-5 pt-4 border-t border-[#DCDCDC] flex flex-wrap justify-center gap-2.5 text-xs font-semibold">
+            <a href="https://faculty.korea.ac.kr/kufaculty/CellFunctionRegulation/index.do" target="_blank" rel="noopener noreferrer" class="text-[#333333] hover:text-ku-crimson underline">KU 교수소개</a>
+            <span class="text-zinc-300">|</span>
+            <a href="https://pure.korea.ac.kr/en/persons/seungkwon-you/" target="_blank" rel="noopener noreferrer" class="text-[#333333] hover:text-ku-crimson underline">KU Pure (134)</a>
+            <span class="text-zinc-300">|</span>
+            <a href="https://scholar.korea.ac.kr/researcher/dbed18ed-6333-4c4d-a704-3d4793ae3436/item" target="_blank" rel="noopener noreferrer" class="text-[#333333] hover:text-ku-crimson underline">ScholarWorks</a>
+          </div>
+        </div>
+
+        <div class="lg:col-span-8">
+          <div class="flex flex-wrap border-b border-[#CCCCCC] mb-6" role="tablist">
+            <button type="button" data-cv-tab="education" class="cv-tab-btn px-4 py-2.5 text-sm font-bold border-b-2 border-ku-crimson text-ku-crimson cursor-pointer" data-i18n="tabEducation">학력 (Education)</button>
+            <button type="button" data-cv-tab="career" class="cv-tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-[#666666] hover:text-[#111111] cursor-pointer" data-i18n="tabCareer">주요 경력 (Career)</button>
+            <button type="button" data-cv-tab="editorial" class="cv-tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-[#666666] hover:text-[#111111] cursor-pointer" data-i18n="tabEditorial">학회·편집·평가</button>
+            <button type="button" data-cv-tab="teaching" class="cv-tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-[#666666] hover:text-[#111111] cursor-pointer" data-i18n="tabTeaching">수상 및 전공·강의</button>
+          </div>
+          <div id="cvContentPanel">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 3: RESEARCH (Themes + Grants & Patents)                          -->
+  <!-- ===================================================================== -->
+  <section id="page-research" class="page-view hidden">
+    <div class="sub-banner text-white">
+      <div class="pc-container py-9">
+        <div class="text-[11px] text-rose-200 tracking-wider uppercase mb-1">HOME &gt; RESEARCH</div>
+        <h1 class="text-2xl sm:text-3xl font-bold" data-i18n="researchPageTitle">연구분야 및 과제·특허 (Research)</h1>
+      </div>
+    </div>
+
+    <div class="pc-container py-12 space-y-12">
+      <div class="bg-[#F8F8F7] border-l-4 border-ku-crimson p-5 text-[14px] text-[#333333] leading-relaxed" data-i18n="researchIntroBox">
+        고려대학교 세포기능조절실험실(Cell Function Regulation Laboratory)은 유도만능줄기세포(iPSC)의 신규 역분화 인자 및 저분자 화합물 발굴, 신경·전구세포 분화 제어, 줄기세포 분비분자 기반 무세포 재생의약, 나노젤·하이드로겔 전달 플랫폼 및 환자유래 질환모델링 연구를 수행합니다.
+      </div>
+
+      <div id="researchCardsGrid" class="space-y-8">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Grants & Patents Sub-section -->
+      <div>
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b-2 border-[#222222] pb-3 mb-5">
+          <h2 class="text-lg font-bold text-[#111111]" data-i18n="projSectionTitle">주요 연구과제 및 등록 특허 (Grants &amp; Patents)</h2>
+          <div class="flex gap-1.5">
+            <button type="button" data-proj-tab="all" class="proj-tab-btn px-3.5 py-1.5 text-xs font-semibold bg-ku-crimson text-white cursor-pointer" data-i18n="projTabAll">전체</button>
+            <button type="button" data-proj-tab="grants" class="proj-tab-btn px-3.5 py-1.5 text-xs font-semibold bg-[#F2F2F2] text-[#444444] hover:text-[#111111] cursor-pointer" data-i18n="projTabGrants">국가연구과제</button>
+            <button type="button" data-proj-tab="patents" class="proj-tab-btn px-3.5 py-1.5 text-xs font-semibold bg-[#F2F2F2] text-[#444444] hover:text-[#111111] cursor-pointer" data-i18n="projTabPatents">등록 특허</button>
+          </div>
+        </div>
+        <div id="projectsPatentsGrid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 4: MEMBERS                                                       -->
+  <!-- ===================================================================== -->
+  <section id="page-members" class="page-view hidden">
+    <div class="sub-banner text-white">
+      <div class="pc-container py-9">
+        <div class="text-[11px] text-rose-200 tracking-wider uppercase mb-1">HOME &gt; MEMBERS</div>
+        <h1 class="text-2xl sm:text-3xl font-bold" data-i18n="membersPageTitle">연구실 구성원 (Members)</h1>
+      </div>
+    </div>
+
+    <div class="pc-container py-12 space-y-10">
+      <div>
+        <h2 class="text-base font-bold text-[#111111] border-b-2 border-ku-crimson pb-2 mb-5">Principal Investigator</h2>
+        <div class="flex flex-col sm:flex-row gap-6 items-start border border-[#E2E2E2] p-5 bg-white">
+          <div class="w-28 h-36 bg-[#F5F5F4] border border-[#DCDCDC] overflow-hidden shrink-0">
+            <img
+              src="https://faculty.korea.ac.kr/_res/kufaculty/img/professor/yooseungkwon.png"
+              alt="유승권 교수"
+              referrerpolicy="no-referrer"
+              class="w-28 h-36 object-cover object-top"
+              onerror="handleProfPhotoError(this)"
+            />
+          </div>
+          <div>
+            <div class="text-lg font-bold text-[#111111]" data-i18n="profName">유승권 교수 (Seungkwon You, Ph.D.)</div>
+            <div class="text-xs font-semibold text-ku-crimson mt-0.5" data-i18n="profRole">고려대학교 생명과학대학 생명공학부 정교수</div>
+            <div class="text-xs text-[#555555] mt-3 space-y-1">
+              <div>Ph.D., Molecular Endocrinology, University of Minnesota (1997)</div>
+              <div>M.S., Molecular Endocrinology, University of Minnesota (1994)</div>
+              <div>B.S., Animal Science, Korea University (1989)</div>
+              <div class="pt-1">E-mail: <a href="mailto:bioseung@korea.ac.kr" class="text-ku-crimson font-semibold hover:underline">bioseung@korea.ac.kr</a> · Tel: 02-3290-3057</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-2 border-[#222222] pb-2 mb-5">
+          <h2 class="text-base font-bold text-[#111111]" data-i18n="teamStructureTitle">Researchers &amp; Graduate Students</h2>
+          <a href="#/join" data-route="join" class="route-link text-xs font-semibold text-ku-crimson hover:underline" data-i18n="membersJoinLink">연구실 합류 및 지원 안내 →</a>
+        </div>
+        <p class="text-xs text-[#666666] mb-5" data-i18n="teamStructureSub">
+          고려대학교 공식 교수소개 페이지에 현재 개별 연구원 명단이 미공개 상태이므로, 실제 구성원 성함·과정·이메일·사진은 본 HTML 파일 상단 LAB_DATA 영역에 추가하시면 즉시 표시됩니다.
+        </p>
+        <div id="teamRolesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 5: PUBLICATIONS (35 Verified SCI Papers + BibTeX/APA Export)     -->
+  <!-- ===================================================================== -->
+  <section id="page-publications" class="page-view hidden">
+    <div class="sub-banner text-white">
+      <div class="pc-container py-9">
+        <div class="text-[11px] text-rose-200 tracking-wider uppercase mb-1">HOME &gt; PUBLICATIONS</div>
+        <h1 class="text-2xl sm:text-3xl font-bold" data-i18n="pubsPageTitle">논문 실적 (Publications)</h1>
+      </div>
+    </div>
+
+    <div class="pc-container py-12">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div id="pubCountStatus" class="text-xs font-medium text-[#555555]"></div>
+        <div class="flex flex-wrap items-center gap-3">
+          <button id="exportBibBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#CCCCCC] bg-white hover:border-ku-crimson hover:text-ku-crimson text-xs font-semibold text-[#333333] cursor-pointer">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span data-i18n="exportBibLabel">검색 결과 BibTeX (.bib) 다운로드</span>
+          </button>
+          <a href="https://pure.korea.ac.kr/en/persons/seungkwon-you/" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-ku-crimson hover:underline inline-flex items-center gap-1">
+            <span data-i18n="pubsFullLink">KU Pure 전체 134편 보기</span>
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Academic Search & Filter Bar -->
+      <div class="bg-[#F7F7F7] border border-[#DCDCDC] p-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+          <div class="md:col-span-5">
+            <input id="pubSearchInput" type="text" placeholder="논문 제목, 저자, 저널, DOI, 연도 검색..." class="w-full px-3 py-2 border border-[#CCCCCC] bg-white text-sm focus:outline-none focus:border-ku-crimson" />
+          </div>
+          <div class="md:col-span-3">
+            <select id="pubEraSelect" class="w-full px-3 py-2 border border-[#CCCCCC] bg-white text-sm text-[#333333] focus:outline-none focus:border-ku-crimson">
+              <option value="all" data-i18n="eraAll">전체 연도 (2010–2026)</option>
+              <option value="2024-2026" data-i18n="era2426">2024 – 2026</option>
+              <option value="2020-2023" data-i18n="era2023">2020 – 2023</option>
+              <option value="2014-2019" data-i18n="era1419">2014 – 2019</option>
+              <option value="2010-2013" data-i18n="era1013">2010 – 2013</option>
+            </select>
+          </div>
+          <div class="md:col-span-2 flex items-center gap-2 px-1">
+            <input id="pubCorrOnly" type="checkbox" class="accent-ku-crimson w-4 h-4 cursor-pointer" />
+            <label for="pubCorrOnly" class="text-xs font-semibold text-[#333333] cursor-pointer select-none" data-i18n="corrOnlyLabel">교신저자만 (*)</label>
+          </div>
+          <div class="md:col-span-2">
+            <button id="resetPubFilterBtn" type="button" class="w-full px-3 py-2 border border-[#CCCCCC] bg-white hover:border-ku-crimson hover:text-ku-crimson text-xs font-semibold text-[#333333] cursor-pointer" data-i18n="resetFilter">
+              필터 초기화
+            </button>
+          </div>
+        </div>
+        <div id="pubCategoryPills" class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-[#E5E5E5]">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div id="pubListContainer" class="space-y-8">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 6: NEWS & PRESS (Verified Korean University Board Style)         -->
+  <!-- ===================================================================== -->
+  <section id="page-news" class="page-view hidden">
+    <div class="sub-banner text-white">
+      <div class="pc-container py-9">
+        <div class="text-[11px] text-rose-200 tracking-wider uppercase mb-1">HOME &gt; NEWS &amp; PRESS</div>
+        <h1 class="text-2xl sm:text-3xl font-bold" data-i18n="newsPageTitle">연구실 소식 · 언론보도 및 수상 (News &amp; Press)</h1>
+      </div>
+    </div>
+
+    <div class="pc-container py-12">
+      <div class="flex flex-wrap gap-2 mb-6 border-b border-[#CCCCCC] pb-3">
+        <button type="button" data-news-tab="all" class="news-tab-btn px-4 py-1.5 text-xs font-semibold bg-ku-crimson text-white cursor-pointer" data-i18n="newsTabAll">전체</button>
+        <button type="button" data-news-tab="press" class="news-tab-btn px-4 py-1.5 text-xs font-semibold bg-[#F2F2F2] text-[#444444] hover:text-[#111111] cursor-pointer" data-i18n="newsTabPress">언론보도</button>
+        <button type="button" data-news-tab="award" class="news-tab-btn px-4 py-1.5 text-xs font-semibold bg-[#F2F2F2] text-[#444444] hover:text-[#111111] cursor-pointer" data-i18n="newsTabAward">수상 · 선정</button>
+        <button type="button" data-news-tab="paper" class="news-tab-btn px-4 py-1.5 text-xs font-semibold bg-[#F2F2F2] text-[#444444] hover:text-[#111111] cursor-pointer" data-i18n="newsTabPaper">주요 논문</button>
+      </div>
+
+      <div id="newsBoardContainer">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 7: JOIN US (Prospective Students Guide + FAQ + Inquiry)          -->
+  <!-- ===================================================================== -->
+  <section id="page-join" class="page-view hidden">
+    <div class="sub-banner text-white">
+      <div class="pc-container py-9">
+        <div class="text-[11px] text-rose-200 tracking-wider uppercase mb-1">HOME &gt; JOIN US</div>
+        <h1 class="text-2xl sm:text-3xl font-bold" data-i18n="joinPageTitle">대학원생 · 박사후연구원 · 학부연구생 모집 (Join Us)</h1>
+      </div>
+    </div>
+
+    <div class="pc-container py-12 space-y-12">
+      <!-- Track Cards -->
+      <div>
+        <h2 class="text-base font-bold text-[#111111] border-b-2 border-ku-crimson pb-2 mb-5" data-i18n="joinTracksHeading">모집 분야 및 지원 자격</h2>
+        <div id="joinTracksGrid" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Application Checklist & FAQ -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div class="lg:col-span-6">
+          <h2 class="text-base font-bold text-[#111111] border-b-2 border-[#222222] pb-2 mb-4" data-i18n="faqHeading">자주 묻는 질문 (Prospective Student FAQ)</h2>
+          <div id="faqContainer" class="divide-y divide-[#E2E2E2] border-b border-[#E2E2E2]">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <div class="lg:col-span-6">
+          <h2 class="text-base font-bold text-[#111111] border-b-2 border-[#222222] pb-2 mb-4" data-i18n="composerHeading">지원 및 면담 문의 메일 작성</h2>
+          <p class="text-xs text-[#555555] mb-4 leading-relaxed" data-i18n="composerSub">
+            아래 항목을 입력한 뒤 메일 앱으로 보내기를 누르시면 유승권 교수님(bioseung@korea.ac.kr) 수신 이메일이 바로 준비됩니다. (지원 시 CV 및 성적증명서를 함께 첨부해 주세요.)
+          </p>
+
+          <div class="space-y-3.5 bg-[#FAFAFA] border border-[#E2E2E2] p-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label for="inqTrack" class="block text-xs font-semibold text-[#333333] mb-1" data-i18n="labelTrack">문의 구분</label>
+                <select id="inqTrack" class="w-full px-3 py-2 border border-[#CCCCCC] bg-white text-sm focus:outline-none focus:border-ku-crimson">
+                  <option value="grad" data-i18n="optGrad">대학원 진학 (석사 / 박사 / 석박통합)</option>
+                  <option value="undergrad" data-i18n="optUndergrad">학부연구생 지원</option>
+                  <option value="postdoc" data-i18n="optPostdoc">박사후연구원(Postdoc) 지원</option>
+                  <option value="collab" data-i18n="optCollab">공동연구 · 산학협력 문의</option>
+                </select>
+              </div>
+              <div>
+                <label for="inqName" class="block text-xs font-semibold text-[#333333] mb-1" data-i18n="labelName">성함 / 소속</label>
+                <input id="inqName" type="text" placeholder="예: 홍길동 (고려대 생명공학부)" class="w-full px-3 py-2 border border-[#CCCCCC] bg-white text-sm focus:outline-none focus:border-ku-crimson" />
+              </div>
+            </div>
+
+            <div>
+              <label for="inqInterest" class="block text-xs font-semibold text-[#333333] mb-1" data-i18n="labelInterest">문의 내용</label>
+              <textarea id="inqInterest" rows="4" placeholder="관심 연구분야 및 면담 희망 일정을 간략히 적어주세요." class="w-full px-3 py-2 border border-[#CCCCCC] bg-white text-sm focus:outline-none focus:border-ku-crimson"></textarea>
+            </div>
+
+            <div class="flex flex-wrap gap-2.5 pt-1">
+              <a id="mailtoActionBtn" href="mailto:bioseung@korea.ac.kr" class="inline-flex items-center gap-1.5 px-5 py-2 bg-ku-crimson hover:bg-ku-dark text-white text-xs sm:text-sm font-semibold transition-colors">
+                <i data-lucide="mail" class="w-4 h-4"></i>
+                <span data-i18n="openMailBtn">메일 앱으로 보내기</span>
+              </a>
+              <button id="copyInquiryBtn" type="button" class="inline-flex items-center gap-1.5 px-4 py-2 border border-[#CCCCCC] bg-white hover:border-ku-crimson hover:text-ku-crimson text-[#333333] text-xs sm:text-sm font-semibold cursor-pointer">
+                <span data-i18n="copyMailBtn">작성 내용 복사</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 8: CONTACT (Campus Map + Subway/Bus Directions)                  -->
+  <!-- ===================================================================== -->
+  <section id="page-contact" class="page-view hidden">
+    <div class="sub-banner text-white">
+      <div class="pc-container py-9">
+        <div class="text-[11px] text-rose-200 tracking-wider uppercase mb-1">HOME &gt; CONTACT</div>
+        <h1 class="text-2xl sm:text-3xl font-bold" data-i18n="contactPageTitle">오시는 길 및 연락처 (Contact &amp; Directions)</h1>
+      </div>
+    </div>
+
+    <div class="pc-container py-12 space-y-10">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <!-- Interactive Campus Map -->
+        <div class="lg:col-span-7">
+          <h2 class="text-base font-bold text-[#111111] border-b-2 border-ku-crimson pb-2 mb-4" data-i18n="mapHeading">캠퍼스 위치 지도 (고려대학교 자연계캠퍼스 생명과학관 서관)</h2>
+          <div class="border border-[#CCCCCC] bg-[#F5F5F4]">
+            <div id="kuCampusMap"></div>
+          </div>
+          <div class="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-[#666666]">
+            <span>좌표: 37.588195° N, 127.034025° E (서울특별시 성북구 안암로 145)</span>
+            <a href="https://lifesci.korea.ac.kr/lifesci/about/visit.do" target="_blank" rel="noopener noreferrer" class="text-ku-crimson font-semibold hover:underline inline-flex items-center gap-1">
+              <span data-i18n="visitGuideBtn">생명과학대학 공식 찾아오는 길</span>
+              <i data-lucide="external-link" class="w-3 h-3"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Contact Table -->
+        <div class="lg:col-span-5">
+          <h2 class="text-base font-bold text-[#111111] border-b-2 border-[#222222] pb-2 mb-4" data-i18n="locationHeading">연구실 연락처</h2>
+          <table class="w-full text-[13.5px] board-table">
+            <tbody>
+              <tr>
+                <th class="py-3 px-3.5 w-28 text-xs" data-i18n="addrLabel">주소</th>
+                <td class="py-3 px-3.5" data-i18n="addrValue">[02841] 서울특별시 성북구 안암로 145 고려대학교 자연계캠퍼스 생명과학관 서관</td>
+              </tr>
+              <tr>
+                <th class="py-3 px-3.5 text-xs" data-i18n="roomLabel">연구실 / 실험실</th>
+                <td class="py-3 px-3.5" data-i18n="roomValue">교수연구실: 서관 314호 · 실험실: 서관 321, 325~328호</td>
+              </tr>
+              <tr>
+                <th class="py-3 px-3.5 text-xs">Office Tel</th>
+                <td class="py-3 px-3.5">02-3290-3057</td>
+              </tr>
+              <tr>
+                <th class="py-3 px-3.5 text-xs">Lab Tel</th>
+                <td class="py-3 px-3.5">02-3290-3493</td>
+              </tr>
+              <tr>
+                <th class="py-3 px-3.5 text-xs">Fax</th>
+                <td class="py-3 px-3.5">02-3290-3507</td>
+              </tr>
+              <tr>
+                <th class="py-3 px-3.5 text-xs">E-mail</th>
+                <td class="py-3 px-3.5"><a href="mailto:bioseung@korea.ac.kr" class="text-ku-crimson font-semibold hover:underline">bioseung@korea.ac.kr</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Subway & Bus Directions Table -->
+      <div>
+        <h2 class="text-base font-bold text-[#111111] border-b-2 border-[#222222] pb-2 mb-4" data-i18n="transitHeading">대중교통 이용 안내 (지하철 · 버스)</h2>
+        <table class="w-full text-[13.5px] board-table">
+          <tbody>
+            <tr>
+              <th class="py-3.5 px-4 w-36 text-xs" data-i18n="subwayLabel">지하철 (6호선)</th>
+              <td class="py-3.5 px-4 space-y-1">
+                <div><strong class="text-ku-crimson">6호선 안암역(고대병원앞):</strong> 2번 출구(생명과학대학 공식 안내) 또는 4번 출구(자연계캠퍼스·의료원 방면) 하차 후 도보 이동</div>
+                <div class="text-xs text-[#666666]">※ 6호선 고려대역(1번 출구)은 인문사회계 캠퍼스 방면이므로 자연계캠퍼스(생명과학관 서관) 방문 시 안암역 하차가 가깝습니다.</div>
+              </td>
+            </tr>
+            <tr>
+              <th class="py-3.5 px-4 text-xs" data-i18n="busLabel">버스 이용</th>
+              <td class="py-3.5 px-4 space-y-1">
+                <div><strong>고려대이공대 정류장 (08-299, 08-300, 08-564):</strong> 간선 273 · 지선 1111, 2115 · 마을버스 성북04</div>
+                <div class="text-xs text-[#666666]"><strong>안암오거리 · 고려대 앞 연계 노선:</strong> 간선 101, 111, 144, 173, N51 · 지선 1017, 1222, 2222, 7211 · 공항버스 6101, 6102</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Official Institutional Footer -->
+  <footer class="bg-[#262626] text-[#B5B5B5] text-xs border-t border-[#161616]">
+    <div class="pc-container py-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="space-y-1">
+        <div class="text-white font-bold text-[13px]" data-i18n="footerTitle">고려대학교 생명과학대학 생명공학부 세포기능조절실험실 (CFR Lab)</div>
+        <div data-i18n="footerAddr">[02841] 서울특별시 성북구 안암로 145 고려대학교 자연계캠퍼스 생명과학관 서관 314호 (실험실 321, 325~328호)</div>
+        <div>Tel: 02-3290-3057 (Office) / 02-3290-3493 (Lab) · Fax: 02-3290-3507 · E-mail: bioseung@korea.ac.kr</div>
+      </div>
+      <div class="text-[#888888] shrink-0">
+        COPYRIGHT © Laboratory of Cell Function Regulation, Korea University.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Research Detail Modal -->
+  <div id="researchModal" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="bg-white max-w-2xl w-full max-h-[86vh] overflow-y-auto border border-[#CCCCCC] shadow-xl">
+      <div class="px-6 py-4 bg-[#F7F7F7] border-b border-[#DCDCDC] flex items-center justify-between gap-4">
+        <div>
+          <span id="modalTag" class="text-xs font-bold text-ku-crimson"></span>
+          <h3 id="modalTitle" class="text-lg font-bold text-[#111111] mt-0.5"></h3>
+        </div>
+        <button id="closeModalBtn" type="button" class="p-1 text-[#555555] hover:text-[#111111] cursor-pointer" aria-label="Close">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div id="modalFigureWrap" class="hidden border border-[#E2E2E2] bg-[#FAFAFA] p-3">
+          <img id="modalImage" src="" alt="" referrerpolicy="no-referrer" class="w-full max-h-64 object-contain mx-auto bg-white" onerror="document.getElementById('modalFigureWrap').classList.add('hidden')" />
+          <p id="modalCaption" class="text-[11px] text-[#666666] mt-2 text-center"></p>
+        </div>
+        <p id="modalSummary" class="text-sm text-[#333333] leading-relaxed"></p>
+        <div>
+          <h4 class="text-xs font-bold text-ku-crimson uppercase mb-2" data-i18n="modalHighlights">주요 연구 내용</h4>
+          <ul id="modalBullets" class="space-y-2 text-[13.5px] text-[#333333] list-disc pl-5"></ul>
+        </div>
+        <div class="pt-4 border-t border-[#EAEAEA] flex items-center justify-between">
+          <button id="modalFilterPubsBtn" type="button" class="px-4 py-2 bg-ku-crimson hover:bg-ku-dark text-white text-xs font-semibold cursor-pointer" data-i18n="modalViewPubs">관련 논문 보기</button>
+          <button id="modalCloseFooterBtn" type="button" class="px-4 py-2 border border-[#CCCCCC] hover:bg-[#F5F5F5] text-xs font-semibold text-[#333333] cursor-pointer" data-i18n="closeBtn">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 pointer-events-none"></div>
+
+  <script>
+    // =========================================================================
+    // IMAGE FALLBACKS
+    // =========================================================================
+    function handleProfPhotoError(img) {
+      const step = img.getAttribute('data-fb-step') || '0';
+      if (step === '0') {
+        img.setAttribute('data-fb-step', '1');
+        img.src = 'https://pure.korea.ac.kr/files-asset/158847573/K111177.jpg?w=160&f=jpg';
+      } else if (step === '1') {
+        img.setAttribute('data-fb-step', '2');
+        img.src = 'https://bio.korea.ac.kr/_attach/image/2023/03/thumb_iyjkzgDvHvJeeodmglgj.jpg';
+      } else {
+        const parent = img.parentElement;
+        if (parent) {
+          parent.innerHTML = '<div class="w-full h-full bg-[#FAF3F5] text-[#8B0029] flex items-center justify-center font-bold text-xs text-center p-2">Prof. Seungkwon You</div>';
+        }
+      }
+    }
+
+    function handleResearchFigureError(img, pillarId) {
+      const col = img.closest('.research-fig-col');
+      const pillar = LAB_DATA.researchPillars.find(p => p.id === pillarId);
+      if (!col || !pillar) return;
+      const l = state.lang;
+      col.innerHTML = `
+        <div class="text-xs text-[#444444] space-y-2">
+          <div class="font-bold text-[#111111] border-b border-[#DCDCDC] pb-1.5">${l === 'ko' ? '핵심 키워드' : 'Research Keywords'}</div>
+          <div class="flex flex-wrap gap-1.5 pt-1">
+            ${pillar.keywords.map(k => `<span class="px-2 py-0.5 bg-white border border-[#DCDCDC] text-[11px] text-[#333333]">${k}</span>`).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // COMPLETE GROUNDED LAB DATA (Editable Single Source of Truth)
+    // =========================================================================
+    const LAB_DATA = {
+      researchPillars: [
+        {
+          id: 'reprogramming',
+          num: '01',
+          categoryKey: 'Reprogramming & Neural',
+          figureUrl: 'https://www.researchgate.net/publication/401454307/figure/fig4/AS:11431282004432538@1773431504095/Morusin-promotes-oligodendrocyte-lineage-progression-in-human-SOX10-inducible-cerebral_Q320.jpg',
+          figureCaption: {
+            ko: 'Fig. Morusin 처리에 따른 SOX10 유도성 인간 뇌 오가노이드 내 희소돌기아교세포 분화 촉진 (IJMS, 2026)',
+            en: 'Fig. Morusin promotes oligodendrocyte lineage progression in human SOX10-inducible cerebral organoids (IJMS, 2026)'
+          },
+          tag: { ko: '세포역분화 · 신경분화', en: 'Reprogramming & Neural' },
+          title: {
+            ko: '신규 역분화 인자·저분자 화합물 기반 세포역분화 및 신경전구세포 분화',
+            en: 'Cellular Reprogramming & Neural Progenitor Control'
+          },
+          shortDesc: {
+            ko: 'Bmi1·Id3·Nanog 및 저분자 화합물(Sodium Butyrate, Morusin), 합성 mRNA를 이용해 iPSC, 후방 전신경전구세포(PNPs), 척수 운동신경세포 및 희소돌기아교세포(iOPC)를 유도합니다.',
+            en: 'Using novel factors (Bmi1, Id3, Nanog), small molecules (Sodium Butyrate, Morusin), and synthetic mRNA to derive iPSCs, posterior PNPs, spinal motor neurons, and iOPCs.'
+          },
+          keywords: ['iPSC', 'Direct Reprogramming', 'CDX2+SOX2+ PNPs', 'Morusin', 'iNSC / iOPC'],
+          summary: {
+            ko: '유도만능줄기세포(iPSC) 수립과 체세포 직접교차분화(Direct Reprogramming) 원천기술을 바탕으로 척수손상, 근위축성측색경화증(ALS), 다발성경화증 등 난치성 신경계 질환의 세포치료제 후보세포 및 인간 오가노이드 플랫폼을 개발합니다.',
+            en: 'Combining iPSC derivation and direct somatic reprogramming to establish clinical-grade neural progenitor cells and human organoid models for spinal cord injury, ALS, and demyelinating disorders.'
+          },
+          highlights: {
+            ko: [
+              'HDAC 억제제 Sodium Butyrate를 이용한 hPSC 유래 CDX2+SOX2+ 후방 전신경전구세포(PNPs) 및 복측 척수 운동신경 분화 플랫폼 확립 (IJMS, 2026)',
+              '천연 플라보노이드 Morusin 발굴 및 SOX10 유도성 인간 뇌 오가노이드·EAE 모델에서의 희소돌기아교세포 성숙 및 수초화 촉진 규명 (IJMS, 2026)',
+              'OCT4 기반 유도 희소돌기아교전구세포(iOPC)의 재수초화 효능 규명 (npj Regenerative Medicine, 2022) 및 인간 유도신경줄기세포(iNSC) 척수손상 기능 회복 입증 (EMM, 2023)'
+            ],
+            en: [
+              'Sodium butyrate-assisted induction of CDX2+SOX2+ posterior pre-neural progenitors and ventral spinal motor neurons from hPSCs (IJMS, 2026)',
+              'Identification of Morusin promoting oligodendrocyte maturation and remyelination in SOX10-inducible cerebral organoids and EAE mice (IJMS, 2026)',
+              'OCT4-induced OPCs promoting remyelination (npj Regen. Med., 2022) and human iNSCs supporting functional recovery in spinal cord injury (EMM, 2023)'
+            ]
+          }
+        },
+        {
+          id: 'secretome',
+          num: '02',
+          categoryKey: 'Secretome & Cell-Free',
+          figureUrl: 'https://biograduate.korea.ac.kr/_res/biograd/img/sub/visioin08.jpg',
+          figureCaption: {
+            ko: '고려대학교 대학원 융합생명공학과 세포치료제 및 신약개발 연구부',
+            en: 'Korea University Dept. of Biotechnology Graduate Research Division'
+          },
+          tag: { ko: '무세포 재생의약 · 배양액', en: 'Secretome & Cell-Free' },
+          title: {
+            ko: '줄기세포 분비분자(Secretome) 및 메디컬·코스메틱 배양액 플랫폼',
+            en: 'Stem Cell Secretome & Cell-Free Therapeutics'
+          },
+          shortDesc: {
+            ko: '양수유래 중간엽줄기세포(afMSC-SMs) 및 유도 신장전구세포 분비분자(iNPC-SMs)를 분말화·제형화해 피부 재생, 창상 치유, 발모 촉진 및 급성 신손상 무세포 치료를 연구합니다.',
+            en: 'Developing standardized cell-free therapeutics from afMSC-SMs and iNPC-SMs for xeno-free skin regeneration, wound healing, hair regrowth, and acute kidney injury.'
+          },
+          keywords: ['afMSC-SMs', 'iNPC-SMs', 'Xeno-free Culture', 'Wound Healing & Hair Regrowth', 'AKI'],
+          summary: {
+            ko: '생세포 이식의 안전성·제조·보관 한계를 극복하기 위해 줄기세포 배양액 및 분비인자를 분말화·표준화하는 무세포(Cell-free) 재생의약 플랫폼을 구축하고 임상 및 코스메틱 분야로의 응용을 추진합니다.',
+            en: 'Overcoming manufacturing, storage, and safety hurdles of live-cell transplantation via ethanol-precipitated, scalable stem cell secretome platforms for regenerative medicine.'
+          },
+          highlights: {
+            ko: [
+              '분말화 양수줄기세포 분비분자(afMSC-SMs)를 이용한 Xeno-free 인간 각질형성세포 장기 배양, 창상 치유 및 발모 촉진 입증 (Journal of Controlled Release, 2024, IF 11.5)',
+              '유도 신장전구세포 유래 분비분자(iNPC-SMs)의 시스플라틴 유도 급성 신손상(AKI) 항세포사멸·항염증 및 신기능 회복 검증 (IJMS, 2024)',
+              'Nanog 과발현 양수줄기세포의 모유두세포 활성·발모 촉진 (EMM, 2019) 및 bFGF·셀레늄 조합 대량배양 최적화 (Stem Cell Res. Ther., 2018)'
+            ],
+            en: [
+              'Powdered afMSC-SMs enabling xeno-free keratinocyte expansion, stratified skin reconstitution, wound healing, and hair regrowth (J. Control. Release, 2024, IF 11.5)',
+              'iNPC-sourced molecules mitigating cisplatin-induced acute kidney injury via ROS suppression and anti-inflammatory effects (IJMS, 2024)',
+              'Nanog-overexpressing AF-MSCs promoting hair follicle regeneration (EMM, 2019) and bFGF/selenium expansion optimization (Stem Cell Res. Ther., 2018)'
+            ]
+          }
+        },
+        {
+          id: 'biomaterials',
+          num: '03',
+          categoryKey: 'Nanogel & Biomaterials',
+          figureUrl: '',
+          figureCaption: { ko: '', en: '' },
+          tag: { ko: '나노젤 · 하이드로겔 전달', en: 'Nanogel & Biomaterials' },
+          title: {
+            ko: '페놀성 젤라틴-PEI 모듈형 나노젤 및 하이드로겔 국소·RNA 전달',
+            en: 'Modular Nanogel & Hydrogel Delivery Platforms'
+          },
+          shortDesc: {
+            ko: '원팟 모듈형 나노젤 기반 small RNA 전달 플랫폼과 주사형 히알루론산(HA) 하이드로겔·PLGA 지지체 기반 표적 조직 재생 시스템을 개발합니다.',
+            en: 'Engineering one-pot phenolic gelatin-PEI modular nanogels for small RNA delivery alongside injectable HA hydrogels and PLGA scaffolds for localized tissue repair.'
+          },
+          keywords: ['Phenolic Gelatin-PEI', 'Small RNA Delivery', 'HA Hydrogel', 'PLGA Scaffold', 'Local Delivery'],
+          summary: {
+            ko: '생체적합성 고분자 하이드로겔과 모듈형 나노젤을 세포공학 기술과 융합하여 치료용 핵산(small RNA) 및 줄기세포 유래 생리활성 인자의 전신 유출과 분해를 최소화하고 표적 부위 전달 효율을 극대화합니다.',
+            en: 'Integrating biocompatible polymer hydrogels and modular nanocarriers with stem cell biotechnology to maximize localized bioavailability of small RNAs and therapeutic secretome factors.'
+          },
+          highlights: {
+            ko: [
+              '페놀성 젤라틴-폴리에틸렌이민(PEI) 기반 원팟 모듈형 나노젤 small RNA 전달 플랫폼 개발 (Chemical Engineering Journal, 2025, IF 12.5)',
+              '주사형 히알루론산(HA) 하이드로겔 기반 급성 신손상(AKI) 국소 전달 시스템 개발 (IJMS, 2024) 및 IgA 신증 신장재생 하이드로겔 공동연구 (2022)',
+              'CRISPR/Cas9 편도유래 줄기세포·비타민D 탑재 PLGA 지지체 골조직 재생 (Materials Today Bio, 2024) 및 신경병증성 통증 온도감응성 하이드로겔 (J. Tissue Eng., 2024)'
+            ],
+            en: [
+              'One-pot modular nanogel platform utilizing phenolic gelatin-polyethyleneimine for small RNA delivery (Chemical Engineering Journal, 2025, IF 12.5)',
+              'Injectable hyaluronic acid hydrogel local delivery of iNPC-SMs for AKI (IJMS, 2024) and functionalized HA/gelatin hydrogels for IgA nephropathy (2022)',
+              'Multifunctional vitamin D-PLGA scaffolds with CRISPR/Cas9 tonsil-MSCs (Materials Today Bio, 2024) and thermosensitive hydrogel for neuropathic pain (J. Tissue Eng., 2024)'
+            ]
+          }
+        },
+        {
+          id: 'modeling',
+          num: '04',
+          categoryKey: 'Disease Modeling & iPSC',
+          figureUrl: '',
+          figureCaption: { ko: '', en: '' },
+          tag: { ko: '질환모델링 · 유전자편집', en: 'Disease Modeling & CRISPR' },
+          title: {
+            ko: '희귀난치성 질환 환자유래 iPSC 수립 및 CRISPR/Cas9 질환 모델링',
+            en: 'Patient-Derived iPSC & CRISPR/Cas9 Disease Modeling'
+          },
+          shortDesc: {
+            ko: '부신백질이영양증(X-ALD), 리 증후군(Leigh syndrome), 샤르코-마리-투스병(CMT1B) 환자유래 iPSC 및 CRISPR/Cas9 유전자편집 세포주·3D 장기칩을 구축합니다.',
+            en: 'Establishing patient-specific iPSC lines (X-ALD, Leigh syndrome, CMT1B), CRISPR/Cas9 mutant hESC lines, and 3D organ-on-a-chip models for translational screening.'
+          },
+          keywords: ['X-ALD', 'Leigh Syndrome', 'CMT1B', 'CRISPR/Cas9', '3D Organ-on-a-Chip'],
+          summary: {
+            ko: '희귀 유전성 신경·대사질환 환자의 체세포로부터 비삽입형(self-replicative mRNA 등) iPSC를 수립하고, CRISPR/Cas9 유전자편집 및 3차원 혈관화 장기칩 기술을 결합해 발병 기전 규명과 신약 스크리닝에 활용합니다.',
+            en: 'Deriving transgene-free patient-specific iPSCs and CRISPR/Cas9-edited hESC lines combined with 3D organ-on-a-chip systems for rare genetic disorder modeling and drug screening.'
+          },
+          highlights: {
+            ko: [
+              '자가복제 mRNA 기반 미토콘드리아 cyb 변이 리 증후군(Leigh syndrome) 환자유래 iPSC 및 CRISPR/Cas9 ABCD1 결실 WA14 hESC 세포주 수립 (Stem Cell Research, 2021)',
+              '부신백질이영양증(X-ALD/AMN) 및 샤르코-마리-투스병(CMT1B, MPZ 변이) 환자유래 iPSC 세포주 다수 확립 (Stem Cell Research, 2017–2019)',
+              '폐 세포외기질 하이드로겔 기반 3차원 혈관화 폐암 장기칩(Lung Cancer-on-a-Chip) 약물 스크리닝 공동연구 (Cancers, 2021)'
+            ],
+            en: [
+              'Self-replicative mRNA-mediated Leigh syndrome patient iPSC and CRISPR/Cas9 ABCD1-mutant WA14 hESC lines (Stem Cell Research, 2021)',
+              'Multiple X-linked adrenoleukodystrophy (X-ALD/AMN) and CMT1B patient-derived iPSC lines (Stem Cell Research, 2017–2019)',
+              '3D vascularized lung cancer-on-a-chip with lung ECM hydrogels for in vitro drug screening (Cancers, 2021)'
+            ]
+          }
+        }
+      ],
+
+      cv: {
+        education: [
+          { period: '1994 – 1997', title: { ko: 'Ph.D., Molecular Endocrinology', en: 'Ph.D., Molecular Endocrinology' }, org: { ko: 'University of Minnesota, USA', en: 'University of Minnesota, USA' } },
+          { period: '1991 – 1994', title: { ko: 'M.S., Molecular Endocrinology', en: 'M.S., Molecular Endocrinology' }, org: { ko: 'University of Minnesota, USA', en: 'University of Minnesota, USA' } },
+          { period: '1982 – 1989', title: { ko: 'B.S., Animal Science', en: 'B.S., Animal Science' }, org: { ko: '고려대학교 (Korea University)', en: 'Korea University, Republic of Korea' } }
+        ],
+        career: [
+          { period: '2009.03 – 현재', title: { ko: '고려대학교 생명공학부 정교수', en: 'Professor, Department of Biotechnology, Korea University' }, org: { ko: '세포기능조절실험실 (CFR Lab) 책임교수', en: 'Principal Investigator, Laboratory of Cell Function Regulation' } },
+          { period: '2007.10 – 2008.09', title: { ko: '고려대학교 일반대학원 생명산업과학부 학과주임', en: 'Chair, Graduate Program of Life & Industrial Sciences' }, org: { ko: '고려대학교 일반대학원', en: 'Graduate School, Korea University' } },
+          { period: '2007.09 – 2008.06', title: { ko: '고려대학교 생명과학대학 생명공학부 학부장', en: 'Chair, Division of Biotechnology' }, org: { ko: '고려대학교 생명과학대학', en: 'College of Life Sciences & Biotechnology, Korea University' } },
+          { period: '2004.09 – 2009.02', title: { ko: '고려대학교 생명공학부 부교수', en: 'Associate Professor, Dept. of Biotechnology' }, org: { ko: '고려대학교', en: 'Korea University' } },
+          { period: '2001.09 – 2004.08', title: { ko: '고려대학교 생명유전공학부 조교수', en: 'Assistant Professor, Div. of Life & Genetic Engineering' }, org: { ko: '고려대학교', en: 'Korea University' } },
+          { period: '1999.11 – 2001.08', title: { ko: '서울대학교 농생명공학부 연구조교수', en: 'Research Assistant Professor, Agricultural Biotechnology' }, org: { ko: '서울대학교', en: 'Seoul National University' } },
+          { period: '1997.04 – 1999.11', title: { ko: 'Postdoctoral Fellow', en: 'Postdoctoral Fellow' }, org: { ko: 'University of Minnesota, USA', en: 'University of Minnesota, USA' } },
+          { period: '1996.01 – 1997.04', title: { ko: 'Research Specialist', en: 'Research Specialist' }, org: { ko: 'University of Minnesota, USA', en: 'University of Minnesota, USA' } }
+        ],
+        editorial: [
+          { period: '2021.10 – 현재', title: { ko: 'Cells (MDPI) Section Board Member', en: 'Section Board Member, Cells (MDPI)' }, org: { ko: 'Research Topic Editor: Cellular Reprogramming in Translational Research and Medicine (2021–2022)', en: 'Research Topic Editor: Cellular Reprogramming in Translational Research and Medicine (2021–2022)' } },
+          { period: '2019.12 – 2020.11', title: { ko: 'Biomolecules (MDPI) Research Topic Editor', en: 'Research Topic Editor, Biomolecules (MDPI)' }, org: { ko: 'Small Molecule-Mediated Cellular Reprogramming and Differentiation', en: 'Small Molecule-Mediated Cellular Reprogramming and Differentiation' } },
+          { period: '2009.09 –', title: { ko: 'World Journal of Stem Cells (WJSC) Editorial Board Member', en: 'Editorial Board Member, World Journal of Stem Cells (WJSC)' }, org: { ko: '국제 학술지 편집위원', en: 'International Stem Cell Journal' } },
+          { period: '2007.11 –', title: { ko: '질병관리본부 평가위원', en: 'Evaluation Committee Member, KCDC' }, org: { ko: '국가 보건·줄기세포 연구 평가', en: 'National Stem Cell & Health R&D Evaluation' } },
+          { period: '2006.05 – 2008.04', title: { ko: '산업자원부·지식경제부 산업기술개발사업 기술개발기획평가단 정위원', en: 'Committee Member, Industrial Technology R&D Evaluation Panel' }, org: { ko: '생물소재/제품 분과', en: 'Biomaterials & Bioproducts Division' } },
+          { period: '2005.05 – 2007.06', title: { ko: '국립수의과학검역원 겸임연구관', en: 'Adjunct Researcher, National Veterinary Research & Quarantine Service' }, org: { ko: '동물의과학·생명공학 자문', en: 'Animal Biotechnology Advisory' } },
+          { period: '2004.01 –', title: { ko: '한국동물번식학회지 · 한국가금학회지 편집위원', en: 'Editorial Board Member, Korean Journal of Animal Reproduction & Poultry Science' }, org: { ko: '국내 전문 학술지 편집위원', en: 'Domestic Academic Journals' } },
+          { period: '2002.01 – 2004.12', title: { ko: '식품의약품안전청 평가위원', en: 'Evaluation Committee Member, KFDA' }, org: { ko: '식품독성학과 · 생식독성학과 · 특수독성학과', en: 'Food, Reproductive & Special Toxicology' } }
+        ],
+        teaching: [
+          { period: '2018.05', title: { ko: '고려대학교 석탑기술상 수상', en: 'Korea University Seoktap Technology Award' }, org: { ko: '고려대학교 개교 113주년 기념식 및 고대인의 날', en: '113th Anniversary of Korea University' } },
+          { period: '2016.09', title: { ko: '한국줄기세포학회(KSSCR) 국내 연구자 Spotlight 선정', en: 'KSSCR Domestic Researcher Spotlight' }, org: { ko: '신규 역분화 인자·저분자 교차분화·줄기세포 배양액 연구 성과', en: 'Korean Society for Stem Cell Research' } },
+          { period: '학부 전공', title: { ko: '고려대학교 생명과학대학 생명공학부', en: 'Undergraduate: Department of Biotechnology' }, org: { ko: '세포기능조절 · 동물생리학(LIBT 215) · 세포생물학 영역', en: 'Cell Function Regulation · Animal Physiology · Cell Biology' } },
+          { period: '일반대학원', title: { ko: '융합생명공학과 분자생체공학 전공 (Molecular Bioengineering)', en: 'Graduate School: Dept. of Biotechnology (Molecular Bioengineering)' }, org: { ko: '석사 · 박사 · 석박사통합과정 지도', en: 'M.S., Ph.D., and Integrated Program Supervision' } },
+          { period: '특수대학원', title: { ko: '고려대학교 생명환경과학대학원 분자진단생명공학과', en: 'Graduate School of Life & Environmental Sciences' }, org: { ko: '세부전공: Animal Physiology / Molecular Endocrinology · 세포생물학 전공 강의', en: 'Animal Physiology / Molecular Endocrinology & Cell Biology Lectures' } }
+        ]
+      },
+
+      // 35 Verified SCI Publications (2010–2026)
+      publications: [
+        { id: 'oh2026', year: 2026, era: '2024-2026', corr: true, category: 'Reprogramming & Neural', title: 'Sodium Butyrate-Assisted Induction of Posterior Pre-Neural Progenitors from Pluripotent Stem Cells', authors: 'Oh KT, Kim DH, Hong W, Park K, You H, Lee CK, Oh C, Park GH, You S*', journal: 'International Journal of Molecular Sciences', details: '27(14):6507 (2026 Jul)', doi: '10.3390/ijms27146507', url: 'https://www.mdpi.com/1422-0067/27/14/6507' },
+        { id: 'yun2026', year: 2026, era: '2024-2026', corr: true, category: 'Reprogramming & Neural', title: 'From Natural Compound Screening to Myelin-Associated Effects: Identification of Morusin as a Potent Promoter of Oligodendrocyte Differentiation', authors: 'Yun W, Hong W, Oh KT, Han JH, Park K, Kim IY, Lee D*, You S*', journal: 'International Journal of Molecular Sciences', details: '27(5):2311 (2026 Feb)', doi: '10.3390/ijms27052311', url: 'https://www.mdpi.com/1422-0067/27/5/2311' },
+        { id: 'park2025', year: 2025, era: '2024-2026', corr: true, category: 'Nanogel & Biomaterials', title: 'One-pot modular nanogel platform utilizing phenolic gelatin-polyethyleneimine for small RNA delivery', authors: 'Park K, Zheng J, Yoo JE, Kim J, Kim IY, You S*', journal: 'Chemical Engineering Journal', details: '505:159532 (2025 Feb) · IF 12.5', doi: '10.1016/j.cej.2025.159532', url: 'https://doi.org/10.1016/j.cej.2025.159532' },
+        { id: 'park2024aki', year: 2024, era: '2024-2026', corr: true, category: 'Secretome & Cell-Free', title: 'Hydrogel-Mediated Local Delivery of Induced Nephron Progenitor Cell-Sourced Molecules as a Cell-Free Approach for Acute Kidney Injury', authors: 'Park K, Gao WW, Zheng J, Oh KT, Kim IY*, You S*', journal: 'International Journal of Molecular Sciences', details: '25(19):10615 (2024 Oct)', doi: '10.3390/ijms251910615', url: 'https://pubmed.ncbi.nlm.nih.gov/39408943/' },
+        { id: 'park2024plga', year: 2024, era: '2024-2026', corr: true, category: 'Nanogel & Biomaterials', title: 'Multifunctional vitamin D-incorporated PLGA scaffold with BMP/VEGF-overexpressed tonsil-derived MSC via CRISPR/Cas9 for bone tissue regeneration', authors: 'Park SY, Lee JK, Lee SH, Kim DS, Jung JW, Kim JH, Baek SW, You S*, Hwang DY*, Han DK*', journal: 'Materials Today Bio', details: '28:101254 (2024 Sep)', doi: '10.1016/j.mtbio.2024.101254', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC11426062/' },
+        { id: 'zheng2024', year: 2024, era: '2024-2026', corr: true, category: 'Secretome & Cell-Free', title: 'Utilizing stem cell-secreted molecules as a versatile toolbox for skin regenerative medicine', authors: 'Zheng J, Park K, Jang J, Son D, Park JH, Kim J, Yoo JE, You S*, Kim IY*', journal: 'Journal of Controlled Release', details: '370:583–599 (2024 Jun) · IF 11.5', doi: '10.1016/j.jconrel.2024.05.009', url: 'https://pubmed.ncbi.nlm.nih.gov/38729435/' },
+        { id: 'park2024luteolin', year: 2024, era: '2024-2026', corr: true, category: 'Nanogel & Biomaterials', title: 'Therapeutic potential of luteolin-loaded poly(lactic-co-glycolic acid)/modified magnesium hydroxide microsphere in functional thermosensitive hydrogel for treating neuropathic pain', authors: 'Park SY, Jung JH, Kim DS, Lee JK, Song BG, Shin HE, Jung JW, Baek SW, You S*, Han I*, Han DK*', journal: 'Journal of Tissue Engineering', details: '15:20417314231226105 (2024 Feb)', doi: '10.1177/20417314231226105', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10851718/' },
+        { id: 'son2023', year: 2023, era: '2020-2023', corr: true, category: 'Reprogramming & Neural', title: 'Human induced neural stem cells support functional recovery in spinal cord injury models', authors: 'Son D, Zheng J, Kim IY, Kang PJ, Park K, Priscilla L, Hong W, Yoon BS, Park G, Yoo JE, Song G*, Lee JB*, You S*', journal: 'Experimental & Molecular Medicine', details: '55(6):1182–1192 (2023 Jun)', doi: '10.1038/s12276-023-01003-2', url: 'https://pubmed.ncbi.nlm.nih.gov/37258581/' },
+        { id: 'gao2022', year: 2022, era: '2020-2023', corr: true, category: 'Reprogramming & Neural', title: 'Locally transplanted human urine-induced nephron progenitor cells contribute to renal repair in mice kidney with diabetic nephropathy', authors: 'Gao WW, Chun SY, Kim BS, Ha YS, Lee JN, Lee EH, Kim IY*, You S*, Kwon TG*', journal: 'Biochemical and Biophysical Research Communications', details: '629:128–134 (2022 Nov)', doi: '10.1016/j.bbrc.2022.09.015', url: 'https://pubmed.ncbi.nlm.nih.gov/36116375/' },
+        { id: 'park2022ev', year: 2022, era: '2020-2023', corr: true, category: 'Secretome & Cell-Free', title: 'Human Mesenchymal Stem Cell-Derived Extracellular Vesicles Promote Neural Differentiation of Neural Progenitor Cells', authors: 'Park SY, Kim DS, Kim HM, Lee JK, Hwang DY, Kim TH, You S*, Han DK*', journal: 'International Journal of Molecular Sciences', details: '23(13):7047 (2022 Jun)', doi: '10.3390/ijms23137047', url: 'https://pubmed.ncbi.nlm.nih.gov/35806058/' },
+        { id: 'khunmanee2022', year: 2022, era: '2020-2023', corr: false, category: 'Nanogel & Biomaterials', title: 'Improvement of IgA Nephropathy and Kidney Regeneration by Functionalized Hyaluronic Acid and Gelatin Hydrogel', authors: 'Khunmanee S, Chun SY, Ha YS, Lee JN, Kim BS, Gao WW, Kim IY, Han DK, You S, Kwon TG*, Park H*', journal: 'Tissue Engineering and Regenerative Medicine', details: '19(3):643–658 (2022 Jun)', doi: '10.1007/s13770-022-00442-8', url: 'https://pubmed.ncbi.nlm.nih.gov/35325404/' },
+        { id: 'yun2022opc', year: 2022, era: '2020-2023', corr: true, category: 'Reprogramming & Neural', title: 'OCT4-induced oligodendrocyte progenitor cells promote remyelination and ameliorate disease', authors: 'Yun W, Choi KA, Hwang I, Zheng J, Park M, Hong W, Jang AY, Kim JH, Choi W, Kim DS, Kim IY, Kim YJ, Liu Y, Yoon BS, Park G, Song G, Hong S*, You S*', journal: 'npj Regenerative Medicine', details: '7(1):4 (2022 Jan)', doi: '10.1038/s41536-021-00199-z', url: 'https://pubmed.ncbi.nlm.nih.gov/35027563/' },
+        { id: 'gao2021', year: 2021, era: '2020-2023', corr: true, category: 'Reprogramming & Neural', title: 'Generation of Induced Nephron Progenitor-like Cells from Human Urine-Derived Cells', authors: 'Gao WW, Zheng J, Yun W, Kang PJ, Park G, Song G, Kim IY, You S*', journal: 'International Journal of Molecular Sciences', details: '22(24):13449 (2021 Dec)', doi: '10.3390/ijms222413449', url: 'https://pubmed.ncbi.nlm.nih.gov/34948246/' },
+        { id: 'park2021lung', year: 2021, era: '2020-2023', corr: false, category: 'Disease Modeling & iPSC', title: 'Three-Dimensional Vascularized Lung Cancer-on-a-Chip with Lung Extracellular Matrix Hydrogels for In Vitro Screening', authors: 'Park S, Kim TH, Kim SH, You S, Jung Y', journal: 'Cancers (Basel)', details: '13(16):3930 (2021 Aug)', doi: '10.3390/cancers13163930', url: 'https://pubmed.ncbi.nlm.nih.gov/34439103/' },
+        { id: 'son2021leigh', year: 2021, era: '2020-2023', corr: true, category: 'Disease Modeling & iPSC', title: 'Self-replicative mRNA-mediated generation of induced pluripotent stem cell line from a 1-year-old Leigh syndrome patient with mitochondrial DNA cytochrome b mutation', authors: 'Son D, Zheng J, Kim IY*, You S*', journal: 'Stem Cell Research', details: '54:102392 (2021 Jul)', doi: '10.1016/j.scr.2021.102392', url: 'https://pubmed.ncbi.nlm.nih.gov/34091428/' },
+        { id: 'hong2021abcd1', year: 2021, era: '2020-2023', corr: true, category: 'Disease Modeling & iPSC', title: 'Generation of a WA14 hESC sub-line carrying a hemizygous ABCD1 (c.1696_1710 del) mutation introduced by CRISPR/Cas9 technology', authors: 'Hong W, Yun W, Choi W, Son D, Song G, You S*', journal: 'Stem Cell Research', details: '52:102244 (2021 Apr)', doi: '10.1016/j.scr.2021.102244', url: 'https://pubmed.ncbi.nlm.nih.gov/33611043/' },
+        { id: 'yun2020glia', year: 2020, era: '2020-2023', corr: true, category: 'Reprogramming & Neural', title: 'Rapid induction of gliogenesis in OLIG2 and NKX2.2-expressing progenitors-derived spheroids', authors: 'Yun W, Kim IY, Song G, You S*', journal: 'Stem Cells Translational Medicine', details: '9(12):1643–1650 (2020 Dec)', doi: '10.1002/sctm.19-0455', url: 'https://pubmed.ncbi.nlm.nih.gov/32716131/' },
+        { id: 'you2020pap', year: 2020, era: '2020-2023', corr: false, category: 'Secretome & Cell-Free', title: 'Isolation of mesenchymal stem cells from Pap smear samples', authors: 'You S, et al.', journal: 'Obstetrics & Gynecology Science', details: '2020 Sep (PMC7494764)', doi: '', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC7494764/' },
+        { id: 'zheng2020skin', year: 2020, era: '2020-2023', corr: true, category: 'Secretome & Cell-Free', title: 'Long-term expansion of directly reprogrammed keratinocyte-like cells and in vitro reconstitution of human skin', authors: 'Zheng J, Yun W, Park J, Kang PJ, Lee G, Song G*, Kim IY*, You S*', journal: 'Journal of Biomedical Science', details: '27(1):56 (2020 Apr)', doi: '10.1186/s12929-020-00642-1', url: 'https://pubmed.ncbi.nlm.nih.gov/32312260/' },
+        { id: 'kang2019mrna', year: 2019, era: '2014-2019', corr: true, category: 'Reprogramming & Neural', title: 'mRNA-Driven Generation of Transgene-Free Neural Stem Cells from Human Urine-Derived Cells', authors: 'Kang PJ, Son D, Ko TH, Hong W, Yun W, Jang J, Choi JI, Song G*, Lee J*, Kim IY*, You S*', journal: 'Cells', details: '8(9):1043 (2019 Sep)', doi: '10.3390/cells8091043', url: 'https://pubmed.ncbi.nlm.nih.gov/31489945/' },
+        { id: 'park2019nanog', year: 2019, era: '2014-2019', corr: true, category: 'Secretome & Cell-Free', title: 'Overexpression of Nanog in amniotic fluid-derived mesenchymal stem cells accelerates dermal papilla cell activity and promotes hair follicle regeneration', authors: 'Park J, Jun EK, Son D, Hong W, Jang J, Yun W, Yoon BS, Song G*, Kim IY*, You S*', journal: 'Experimental & Molecular Medicine', details: '51(7):1–15 (2019 Jul)', doi: '10.1038/s12276-019-0266-7', url: 'https://pubmed.ncbi.nlm.nih.gov/31273189/' },
+        { id: 'yun2019hindbrain', year: 2019, era: '2014-2019', corr: true, category: 'Reprogramming & Neural', title: 'Generation of Anterior Hindbrain-Specific, Glial-Restricted Progenitor-Like Cells from Human Pluripotent Stem Cells', authors: 'Yun W, Hong W, Son D, Liu HW, Kim SS, Park M, Kim IY, Kim DS, Song G, You S*', journal: 'Stem Cells and Development', details: '28(10):633–648 (2019 May)', doi: '10.1089/scd.2019.0033', url: 'https://pubmed.ncbi.nlm.nih.gov/30880587/' },
+        { id: 'yeon2019xald', year: 2019, era: '2014-2019', corr: true, category: 'Disease Modeling & iPSC', title: 'Generation of an induced pluripotent stem cell (iPSC) line from a 42-year-old adult cerebral type X-linked adrenoleukodystrophy (X-ALD) patient', authors: 'Yeon GB, Son D, Kang PJ, Oh SM, Lim H, Kang HC, You S*, Kim DS*', journal: 'Stem Cell Research', details: '36:101425 (2019 Apr)', doi: '10.1016/j.scr.2019.101425', url: 'https://pubmed.ncbi.nlm.nih.gov/30921588/' },
+        { id: 'park2018bfgf', year: 2018, era: '2014-2019', corr: true, category: 'Secretome & Cell-Free', title: 'Additive effect of bFGF and selenium on expansion and paracrine action of human amniotic fluid-derived mesenchymal stem cells', authors: 'Park J, Lee JH, Yoon BS, Jun EK, Lee G, Kim IY*, You S*', journal: 'Stem Cell Research & Therapy', details: '9(1):293 (2018 Nov)', doi: '10.1186/s13287-018-1058-z', url: 'https://pubmed.ncbi.nlm.nih.gov/30409167/' },
+        { id: 'you2017xald', year: 2017, era: '2014-2019', corr: true, category: 'Disease Modeling & iPSC', title: 'Generation of induced pluripotent stem cell (iPSC) line from a 21-year-old X-linked adrenoleukodystrophy (X-ALD) patient', authors: 'You YR, Son D, Kang PJ, You S*, Kim DS*', journal: 'Stem Cell Research', details: '25:136–138 (2017 Dec)', doi: '10.1016/j.scr.2017.10.016', url: 'https://pubmed.ncbi.nlm.nih.gov/29128817/' },
+        { id: 'son2017amn', year: 2017, era: '2014-2019', corr: true, category: 'Disease Modeling & iPSC', title: 'Generation of two induced pluripotent stem cell (iPSC) lines from X-linked adrenoleukodystrophy (X-ALD) patients with adrenomyeloneuropathy (AMN)', authors: 'Son D, Quan Z, Kang PJ, Park G, Kang HC*, You S*', journal: 'Stem Cell Research', details: '25:46–49 (2017 Dec)', doi: '10.1016/j.scr.2017.10.003', url: 'https://pubmed.ncbi.nlm.nih.gov/29065337/' },
+        { id: 'son2017cmt', year: 2017, era: '2014-2019', corr: true, category: 'Disease Modeling & iPSC', title: 'Generation of induced pluripotent stem cell (iPSC) line from Charcot-Marie-Tooth disease patient with MPZ mutation (CMT1B)', authors: 'Son D, Kang PJ, Yun W, You S*', journal: 'Stem Cell Research', details: '24:5–7 (2017 Oct)', doi: '10.1016/j.scr.2017.08.002', url: 'https://pubmed.ncbi.nlm.nih.gov/29034895/' },
+        { id: 'zheng2016nsc', year: 2016, era: '2014-2019', corr: true, category: 'Reprogramming & Neural', title: 'A combination of small molecules directly reprograms mouse fibroblasts into neural stem cells', authors: 'Zheng J, Choi KA, Kang PJ, Hyeon S, Kwon S, Moon JH, Hwang I, Kim YI, Kim YS, Yoon BS, Park G, Lee J, Hong S*, You S*', journal: 'Biochemical and Biophysical Research Communications', details: '476(1):42–48 (2016 Jul)', doi: '10.1016/j.bbrc.2016.05.080', url: 'https://pubmed.ncbi.nlm.nih.gov/27207831/' },
+        { id: 'park2015cardio', year: 2015, era: '2014-2019', corr: true, category: 'Reprogramming & Neural', title: 'Conversion of mouse fibroblasts into cardiomyocyte-like cells using small molecule treatments', authors: 'Park G, Yoon BS, Kim YS, Choi SC, Moon JH, Kwon S, Hwang J, Yun W, Kim JH, Park CY, Lim DS, Kim YI, Oh CH*, You S*', journal: 'Biomaterials', details: '54:201–212 (2015 Jun)', doi: '10.1016/j.biomaterials.2015.02.029', url: 'https://pubmed.ncbi.nlm.nih.gov/25907053/' },
+        { id: 'kang2014small', year: 2014, era: '2014-2019', corr: true, category: 'Reprogramming & Neural', title: 'Reprogramming of mouse somatic cells into pluripotent stem-like cells using a combination of small molecules', authors: 'Kang PJ, Moon JH, Yoon BS, Hyeon S, Jun EK, Park G, Yun W, Park J, Park M, Kim A, Whang KY, Koh GY, Oh S, You S*', journal: 'Biomaterials', details: '35(26):7336–7345 (2014 Aug)', doi: '10.1016/j.biomaterials.2014.05.015', url: 'https://pubmed.ncbi.nlm.nih.gov/24881998/' },
+        { id: 'moon2013nanog', year: 2013, era: '2010-2013', corr: true, category: 'Reprogramming & Neural', title: 'Reprogramming of mouse fibroblasts into induced pluripotent stem cells with Nanog', authors: 'Moon JH, Yun W, Kim J, Hyeon S, Kang PJ, Park G, Kim A, Oh S, Whang KY, Kim DW, Yoon BS, You S*', journal: 'Biochemical and Biophysical Research Communications', details: '431(3):444–449 (2013 Feb)', doi: '10.1016/j.bbrc.2012.12.149', url: 'https://doi.org/10.1016/j.bbrc.2012.12.149' },
+        { id: 'moon2012id3', year: 2012, era: '2010-2013', corr: true, category: 'Reprogramming & Neural', title: 'Two-Step generation of induced pluripotent stem cells from mouse fibroblasts using Id3 and Oct4', authors: 'Moon JH, Heo JS, Kwon S, Kim J, Hwang J, Kang PJ, Kim A, Kim HO, Whang KY, Yoon BS*, You S*', journal: 'Journal of Molecular Cell Biology', details: '4(1):59–62 (2012 Feb)', doi: '', url: 'https://faculty.korea.ac.kr/kufaculty/CellFunctionRegulation/index.do' },
+        { id: 'moon2011bmi1', year: 2011, era: '2010-2013', corr: true, category: 'Reprogramming & Neural', title: 'Reprogramming fibroblasts into induced pluripotent stem cells with Bmi1', authors: 'Moon JH, Heo HS, Kim JS, Jun EK, Lee JH, Kim A, Kim J, Whang KY, Kang YK, Yeo S, Lim HJ, Han DW, Kim DW, Oh S, Yoon BS*, Schöler HR*, You S*', journal: 'Cell Research', details: '21(9):1305–1315 (2011)', doi: '', url: 'https://faculty.korea.ac.kr/kufaculty/CellFunctionRegulation/index.do' },
+        { id: 'yoon2010pp2a', year: 2010, era: '2010-2013', corr: true, category: 'Disease Modeling & iPSC', title: 'Optimal Suppression of Protein Phosphatase 2A Activity is Critical for Maintenance of Human Embryonic Stem Cell Self-renewal', authors: 'Yoon BS, Jun EK, Park G, Yoo SJ, Moon JH, Baik CS, Kim A, Kim H, Kim JH, Koh GY, Lee HT, You S*', journal: 'Stem Cells', details: '28:874–884 (2010)', doi: '', url: 'https://faculty.korea.ac.kr/kufaculty/CellFunctionRegulation/index.do' },
+        { id: 'yoon2010afmsc', year: 2010, era: '2010-2013', corr: true, category: 'Secretome & Cell-Free', title: 'Secretory Profiles and Wound Healing Effects of Human Amniotic Fluid-derived Mesenchymal Stem Cells', authors: 'Yoon BS, Moon JH, Jun EK, Kim J, Maeng I, Kim JS, Lee JH, Baik CS, Kim A, Cho KS, Lee JH, Lee HH, Whang KY, You S*', journal: 'Stem Cells and Development', details: '19(6):887–902 (2010)', doi: '', url: 'https://faculty.korea.ac.kr/kufaculty/CellFunctionRegulation/index.do' }
+      ],
+
+      projectsAndPatents: [
+        { type: 'grants', period: '2023.04 – 2025.12', badge: { ko: 'KFRM · 23A0204L1 (13.1억 원)', en: 'KFRM · 23A0204L1 (KRW 1.31B)' }, title: { ko: '분화와 교차분화 작용기전을 활용한 고순도, 고기능성 척수 운동신경 전구세포 확보기술 개발', en: 'Development of High-Purity, High-Functionality Spinal Motor Neuron Progenitor Technology' }, desc: { ko: '범부처재생의료기술개발사업단 재생의료원천기술개발 과제. 교차분화 특이화합물을 활용해 분화 이질성을 극복한 척수-운동신경세포 분화법 개발, scRNA-seq 아형 분석 및 ALS 동물모델 효능 검증.', en: 'Supported by KFRM. Small-molecule-assisted spinal motor neuron progenitor differentiation validated via scRNA-seq and ALS animal transplantation models.' } },
+        { type: 'grants', period: '2025 – 2026', badge: { ko: '고려대 · KIOST 공동지원', en: 'Korea Univ. & KIOST Grants' }, title: { ko: '고려대학교 교내연구과제(K2520291) 및 한국해양과학기술원(PEB0010) 협력 연구', en: 'Korea University Grant (K2520291) & KIOST Collaborative Research (PEB0010)' }, desc: { ko: '전분화능 줄기세포 유래 후방 전신경전구세포(PNPs) 유도 및 천연물 Morusin 기반 희소돌기아교세포 분화 촉진 연구 지원.', en: 'Supporting sodium butyrate-assisted posterior PNP induction and natural compound screening for oligodendrocyte differentiation.' } },
+        { type: 'grants', period: '2020.01 – 2021.12', badge: { ko: '주관과제 · 2.5억 원', en: 'Lead Grant · KRW 250M' }, title: { ko: '국가줄기세포은행 분양자원 확보를 위한 신규 줄기세포 발굴 및 분양용 생산', en: 'Discovery and Standardized Production of Novel Neural Stem Cells for the National Stem Cell Bank' }, desc: { ko: '신규 뇌신경줄기세포 개발·특성화, 동결·해동 및 대량배양 공정 최적화, SOP 확립 및 국가줄기세포은행 기탁용 품질검사 체계 구축.', en: 'Establishment, cryopreservation, mass-culture optimization, and SOP-based banking of novel neural stem cells.' } },
+        { type: 'grants', period: '2020.01 – 2021.12', badge: { ko: '협동과제 · 1.5억 원', en: 'Collaborative Grant · KRW 150M' }, title: { ko: 'ASF 및 구제역 바이러스 감염 저항성 인자의 기능 규명 연구', en: 'Functional Characterization of Viral Resistance Factors Against ASF and FMDV' }, desc: { ko: '돼지 유도만능줄기세포(porcine iPSC) 유전자 편집(knockout) 기반 바이러스 저항성 후보 유전자 검증 시스템 및 질병모델 플랫폼 구축.', en: 'CRISPR knockout functional validation of viral resistance candidate genes using porcine iPSCs.' } },
+        { type: 'patents', period: '2021 등록', badge: { ko: '등록특허 · 10-2021-0064027', en: 'Patent · KR 1020210064027' }, title: { ko: '희소돌기아교세포로 분화가 특화된 신경줄기세포로부터 희소돌기아교세포를 포함하는 오가노이드의 제조방법, 상기 방법으로 제조된 오가노이드 및 이의 용도', en: 'Method for Producing Oligodendrocyte-Containing Organoids from Lineage-Specialized Neural Stem Cells' }, desc: { ko: '희소돌기아교세포 분화 특화 신경줄기세포를 이용해 탈수초성 질환 모델링 및 신약 스크리닝에 활용 가능한 오가노이드를 제조하는 원천특허.', en: 'Registered patent for reproducible generation of myelinating oligodendrocyte organoids.' } },
+        { type: 'patents', period: '2018 등록', badge: { ko: '등록특허 · 10-2018-0101208', en: 'Patent · KR 1020180101208' }, title: { ko: '합성 메신저 RNA를 이용하여 소변세포를 신경줄기세포로 직접 역분화하는 방법', en: 'Method for Direct Reprogramming of Human Urine-Derived Cells into Neural Stem Cells Using Synthetic mRNA' }, desc: { ko: '비침습적으로 채취 가능한 소변 유래 체세포에 합성 mRNA를 도입해 유전체 통합 위험 없이 신경줄기세포로 직접 역분화하는 원천기술.', en: 'Integration-free direct reprogramming of non-invasively collected urine cells into neural stem cells via synthetic mRNA.' } }
+      ],
+
+      newsItems: [
+        { type: 'paper', date: '2026.07.22', source: 'IJMS', ko: 'Sodium Butyrate 기반 인간 만능줄기세포 유래 후방 전신경전구세포(PNPs) 유도 논문 게재', en: 'Published in IJMS: Sodium Butyrate-Assisted Induction of Posterior Pre-Neural Progenitors', url: 'https://www.mdpi.com/1422-0067/27/14/6507' },
+        { type: 'paper', date: '2026.02.28', source: 'IJMS', ko: '천연 플라보노이드 Morusin의 희소돌기아교세포 분화 및 수초화 촉진 규명 논문 게재', en: 'Published in IJMS: Identification of Morusin as a Potent Promoter of Oligodendrocyte Differentiation', url: 'https://www.mdpi.com/1422-0067/27/5/2311' },
+        { type: 'paper', date: '2025.02.01', source: 'Chem. Eng. J.', ko: '페놀성 젤라틴-PEI 모듈형 나노젤 기반 small RNA 전달 논문 게재 (IF 12.5)', en: 'Published in Chemical Engineering Journal (IF 12.5): One-pot modular nanogel for small RNA delivery', url: 'https://doi.org/10.1016/j.cej.2025.159532' },
+        { type: 'press', date: '2022.01.18', source: '매일경제', ko: '다발성경화증 등 탈수초성 질환 치료용 유도 희소돌기아교전구세포(iOPC) 확립 (npj Regen. Med.)', en: 'Maeil Business Newspaper: Establishment of OCT4-induced oligodendrocyte progenitor cells (npj Regen. Med.)', url: 'https://www.mk.co.kr/news/it/10188646' },
+        { type: 'press', date: '2021.12.16', source: '매일경제', ko: '소변 유래 체세포 기반 유도 신장전구세포(iNPC) 직접 역분화 연구 보도', en: 'Maeil Business Newspaper: Direct reprogramming of urine-derived cells into induced nephron progenitors', url: 'https://www.mk.co.kr/news/it/10139535' },
+        { type: 'press', date: '2019.10.16', source: '뉴스웍스', ko: '합성 자가복제 mRNA 기반 비삽입형 환자 맞춤형 자가 유도 신경줄기세포(iNSC) 개발 보도', en: 'Newsworks: Transgene-free mRNA-driven neural stem cells from human urine-derived cells', url: 'https://www.newsworks.co.kr/news/articleView.html?idxno=403221' },
+        { type: 'press', date: '2018.12.05', source: '바이오스펙테이터', ko: '셀레늄·bFGF 병용을 통한 양수유래 줄기세포 대량 증식 및 상처 치유·피부재생 효능 규명', en: 'BioSpectator: bFGF and selenium additive effect on human amniotic fluid MSC expansion and wound healing', url: 'https://www.biospectator.com/news/view/6743' },
+        { type: 'press', date: '2018.06.01', source: '바이오스펙테이터', ko: '유승권 교수 교원창업 스템랩, 직접교차분화 원천기술 기반 척수손상 치료제 개발 보도', en: 'BioSpectator: Direct reprogramming-based spinal cord injury cell therapy development', url: 'https://www.biospectator.com/news/view/5543' },
+        { type: 'award', date: '2018.05.03', source: '아시아투데이', ko: '고려대학교 개교 113주년 기념식 석탑기술상 수상 (유승권 교수)', en: 'Awarded Korea University Seoktap Technology Award (113th Anniversary)', url: 'https://www.asiatoday.co.kr/kn/view.php?key=20180507010003030' },
+        { type: 'award', date: '2016.09.26', source: '한국줄기세포학회', ko: '한국줄기세포학회(KSSCR) 국내 연구자 Spotlight 선정 — 세포기능조절실험실 연구 소개', en: 'Selected for KSSCR Domestic Researcher Spotlight (Cell Function Regulation Lab)', url: 'http://www.ksscr.org/members/spotlight?tpf=board/view&board_code=2&code=2343' },
+        { type: 'press', date: '2011.07.12', source: '고려대 생명공학부', ko: '유승권 교수팀, 역분화 유도만능줄기세포(iPSC) 제조 신규 유전자 Bmi1 발견 (Cell Research)', en: 'KU Dept. of Biotechnology News: Discovery of Bmi1 for iPSC reprogramming (Cell Research)', url: 'https://bio.korea.ac.kr/bio/intro/kupe.do?mode=view&articleNo=19636&article.offset=60&articleLimit=15' }
+      ],
+
+      teamRoles: [
+        { role: { ko: '박사후연구원 / 연구교수', en: 'Postdoctoral Fellows' }, name: { ko: '상시 모집', en: 'Open Positions' }, desc: { ko: '줄기세포 역분화·오가노이드·생체재료 전달 연구', en: 'Reprogramming, Organoids & Biomaterial Delivery' } },
+        { role: { ko: '박사 / 석·박사통합과정', en: 'Ph.D. / Integrated' }, name: { ko: '융합생명공학과', en: 'Dept. of Biotechnology' }, desc: { ko: '세포기능조절·신경분화·재생의학 연구', en: 'Cell Function Regulation & Regenerative Medicine' } },
+        { role: { ko: '석사과정', en: 'M.S. Course' }, name: { ko: '융합생명공학과', en: 'Dept. of Biotechnology' }, desc: { ko: '생명공학·분자세포생물학 전공 지원 가능', en: 'Biotechnology & Molecular Cell Biology' } },
+        { role: { ko: '학부연구생 (인턴)', en: 'Undergraduate Interns' }, name: { ko: '학기 중 / 방학', en: 'Semester / Vacation' }, desc: { ko: '세포배양 및 분자생물학 실험 참여', en: 'Hands-on stem cell culture & molecular assays' } }
+      ],
+
+      joinTracks: [
+        {
+          title: { ko: '대학원생 (석사 · 박사 · 석박통합)', en: 'Graduate Students (M.S. / Ph.D.)' },
+          dept: { ko: '고려대학교 일반대학원 융합생명공학과 (분자생체공학 전공)', en: 'Graduate School, Dept. of Biotechnology' },
+          items: {
+            ko: ['생명공학·생명과학·의생명·바이오소재 관련 전공자', '줄기세포 배양, 역분화, 신경분화, 생체재료 전달 연구 참여', '제출서류: 이력서(CV), 학부 성적증명서, 간략한 연구관심분야'],
+            en: ['Background in Biotechnology, Life Sciences, or Biomaterials', 'Research in stem cell reprogramming, neural differentiation, and biomaterials', 'Required: CV, Academic Transcript, Brief Statement of Research Interest']
+          }
+        },
+        {
+          title: { ko: '박사후연구원 (Postdoctoral Fellow)', en: 'Postdoctoral Researchers' },
+          dept: { ko: '세포기능조절실험실 · 동물분자생체공학연구소', en: 'CFR Lab · Institute of Animal Molecular Biotechnology' },
+          items: {
+            ko: ['줄기세포 생물학, 신경발생학, 단일세포 전사체(scRNA-seq) 또는 약물전달(하이드로겔/나노젤) 박사학위 소지자', '국가 대형과제(KFRM·NRF) 및 국제 공동연구 주도 기회', '제출서류: 이력서(CV), 주요 논문 실적 목록'],
+            en: ['Ph.D. in Stem Cell Biology, Neurobiology, scRNA-seq, or Biomaterials', 'Lead roles in KFRM/NRF grants and international collaborations', 'Required: Full CV and Publication List']
+          }
+        },
+        {
+          title: { ko: '학부연구생 (Undergraduate Intern)', en: 'Undergraduate Researchers' },
+          dept: { ko: '학기 중 개별연구 및 방학 인턴십', en: 'Semester & Vacation Internships' },
+          items: {
+            ko: ['고려대학교 생명과학대학 및 유관 전공 학부생 (타 대학 학생 포함)', '기초 세포배양, 면역형광염색, RT-qPCR 등 핵심 실험 기법 습득', '제출서류: 간단한 자기소개 및 희망 참여 기간(이메일 문의)'],
+            en: ['Undergraduate students in Life Sciences & related fields', 'Training in cell culture, immunocytochemistry, and qPCR', 'Required: Brief self-introduction and available period via email']
+          }
+        }
+      ],
+
+      faqs: [
+        {
+          q: { ko: '타 대학 또는 생명공학 비전공자도 대학원 지원이 가능한가요?', en: 'Can students from other universities or related majors apply?' },
+          a: { ko: '네, 생명과학·화학·바이오소재·의생명공학 등 유관 전공의 타 대학 졸업(예정)자도 지원 가능합니다. 사전 이메일로 이력서와 관심 분야를 보내주시면 면담 일정을 조율해 드립니다.', en: 'Yes. Applicants from other universities and related disciplines (biology, chemistry, biomaterials, biomedical sciences) are welcome. Please email your CV to arrange an interview.' }
+        },
+        {
+          q: { ko: '학부연구생은 언제, 어떤 방식으로 지원하나요?', en: 'When and how can undergraduate students apply for internships?' },
+          a: { ko: '학기 중 또는 방학 시작 1~2개월 전에 교수님 이메일(bioseung@korea.ac.kr)로 소속·학년·관심 연구분야 및 참여 가능 기간을 적어 문의하시면 됩니다.', en: 'Please email Prof. You (bioseung@korea.ac.kr) 1–2 months prior to the semester or vacation with your major, year, research interests, and availability.' }
+        },
+        {
+          q: { ko: '연구실 방문 면담 전 준비해야 할 사항이 있나요?', en: 'What should I prepare before a lab visit or interview?' },
+          a: { ko: '최근 연구실 논문(Publications 탭 참고) 중 관심 있는 1~2편을 미리 읽어보시고, 이력서(CV)와 성적증명서를 이메일로 먼저 공유해 주시면 보다 심도 있는 면담이 가능합니다.', en: 'Reading 1–2 recent papers from the Publications tab and sending your CV and transcript ahead of time will help make the discussion more productive.' }
+        }
+      ]
+    };
+
+    // =========================================================================
+    // I18N
+    // =========================================================================
+    const I18N = {
+      ko: {
+        utilDept: '생명공학부',
+        headerLabName: '세포기능조절실험실',
+        menuHome: 'HOME',
+        menuProf: 'PROFESSOR',
+        menuResearch: 'RESEARCH',
+        menuMembers: 'MEMBERS',
+        menuPubs: 'PUBLICATIONS',
+        menuNews: 'NEWS & PRESS',
+        menuJoin: 'JOIN US',
+        menuContact: 'CONTACT',
+        homeBannerSub: '고려대학교 생명공학부 유승권 교수 · 세포기능조절실험실 (CFR Lab)',
+        homeBannerDesc: '유도만능줄기세포(iPSC) 및 직접교차분화(iNSC, iOPC, iNPC) 원천기술, 저분자 화합물 기반 신경·전구세포 분화 제어, 줄기세포 분비분자(Secretome) 무세포 재생의약 및 모듈형 나노젤·하이드로겔 전달 시스템을 연구합니다.',
+        homeBtnResearch: '연구분야 소개',
+        homeBtnPubs: '논문 목록 (35편)',
+        homeBtnJoin: '대학원생·학부연구생 모집',
+        viewProfProfile: '교수 약력 보기 →',
+        homeResHeading: 'RESEARCH AREAS',
+        homeRecentPubs: 'RECENT PUBLICATIONS',
+        homeNoticeHeading: 'NEWS, AWARDS & PRESS',
+        homeJoinBoxTitle: 'OPEN POSITIONS',
+        homeJoinBoxDesc: '세포 역분화, 줄기세포 분화, 무세포 재생의약 및 생체재료 전달 연구에 관심 있는 석·박사통합과정, 석사과정, 박사후연구원 및 학부연구생을 상시 모집합니다.',
+        homeJoinGuideLink: '지원 안내 및 FAQ →',
+        homeMapLink: '오시는 길 →',
+        fundingStripTitle: 'FUNDING AGENCIES & SUPPORTING INSTITUTIONS',
+        moreLink: 'MORE +',
+        profPageTitle: '지도교수 소개 (Principal Investigator)',
+        profName: '유승권 교수',
+        profRole: '고려대학교 생명과학대학 생명공학부 정교수',
+        profOfficeShort: '생명과학관 서관 314호',
+        copyBtn: '복사',
+        tabEducation: '학력 (Education)',
+        tabCareer: '주요 경력 (Career)',
+        tabEditorial: '학회·편집·평가',
+        tabTeaching: '수상 및 전공·강의',
+        researchPageTitle: '연구분야 및 과제·특허 (Research)',
+        researchIntroBox: '고려대학교 세포기능조절실험실(Cell Function Regulation Laboratory)은 유도만능줄기세포(iPSC)의 신규 역분화 인자 및 저분자 화합물 발굴, 신경·전구세포 분화 제어, 줄기세포 분비분자 기반 무세포 재생의약, 나노젤·하이드로겔 전달 플랫폼 및 환자유래 질환모델링 연구를 수행합니다.',
+        projSectionTitle: '주요 연구과제 및 등록 특허 (Grants & Patents)',
+        projTabAll: '전체',
+        projTabGrants: '국가연구과제',
+        projTabPatents: '등록 특허',
+        membersPageTitle: '연구실 구성원 (Members)',
+        teamStructureTitle: 'Researchers & Graduate Students',
+        membersJoinLink: '연구실 합류 및 지원 안내 →',
+        teamStructureSub: '고려대학교 공식 교수소개 페이지에 현재 개별 연구원 명단이 미공개 상태이므로, 실제 구성원 성함·과정·이메일·사진은 본 HTML 파일 상단 LAB_DATA 영역에 추가하시면 즉시 표시됩니다.',
+        pubsPageTitle: '논문 실적 (Publications)',
+        exportBibLabel: '검색 결과 BibTeX (.bib) 다운로드',
+        pubsFullLink: 'KU Pure 전체 134편 보기',
+        eraAll: '전체 연도 (2010–2026)',
+        era2426: '2024 – 2026',
+        era2023: '2020 – 2023',
+        era1419: '2014 – 2019',
+        era1013: '2010 – 2013',
+        corrOnlyLabel: '교신저자만 (*)',
+        resetFilter: '필터 초기화',
+        newsPageTitle: '연구실 소식 · 언론보도 및 수상 (News & Press)',
+        newsTabAll: '전체',
+        newsTabPress: '언론보도',
+        newsTabAward: '수상 · 선정',
+        newsTabPaper: '주요 논문',
+        joinPageTitle: '대학원생 · 박사후연구원 · 학부연구생 모집 (Join Us)',
+        joinTracksHeading: '모집 분야 및 지원 자격',
+        faqHeading: '자주 묻는 질문 (Prospective Student FAQ)',
+        composerHeading: '지원 및 면담 문의 메일 작성',
+        composerSub: '아래 항목을 입력한 뒤 메일 앱으로 보내기를 누르시면 유승권 교수님(bioseung@korea.ac.kr) 수신 이메일이 바로 준비됩니다. (지원 시 CV 및 성적증명서를 함께 첨부해 주세요.)',
+        labelTrack: '문의 구분',
+        optGrad: '대학원 진학 (석사 / 박사 / 석박통합)',
+        optUndergrad: '학부연구생 지원',
+        optPostdoc: '박사후연구원(Postdoc) 지원',
+        optCollab: '공동연구 · 산학협력 문의',
+        labelName: '성함 / 소속',
+        labelInterest: '문의 내용',
+        openMailBtn: '메일 앱으로 보내기',
+        copyMailBtn: '작성 내용 복사',
+        contactPageTitle: '오시는 길 및 연락처 (Contact & Directions)',
+        mapHeading: '캠퍼스 위치 지도 (고려대학교 자연계캠퍼스 생명과학관 서관)',
+        visitGuideBtn: '생명과학대학 공식 찾아오는 길',
+        locationHeading: '연구실 연락처',
+        addrLabel: '주소',
+        addrValue: '[02841] 서울특별시 성북구 안암로 145 고려대학교 자연계캠퍼스 생명과학관 서관',
+        roomLabel: '연구실 / 실험실',
+        roomValue: '교수연구실: 서관 314호 · 실험실: 서관 321, 325~328호',
+        transitHeading: '대중교통 이용 안내 (지하철 · 버스)',
+        subwayLabel: '지하철 (6호선)',
+        busLabel: '버스 이용',
+        footerTitle: '고려대학교 생명과학대학 생명공학부 세포기능조절실험실 (CFR Lab)',
+        footerAddr: '[02841] 서울특별시 성북구 안암로 145 고려대학교 자연계캠퍼스 생명과학관 서관 314호 (실험실 321, 325~328호)',
+        modalHighlights: '주요 연구 내용',
+        modalViewPubs: '관련 논문 보기',
+        closeBtn: '닫기',
+        viewDetailsBtn: '상세 보기',
+        allCategories: '전체 분야',
+        noPubsFound: '검색 조건에 맞는 논문이 없습니다.',
+        searchPlaceholder: '논문 제목, 저자, 저널, DOI, 연도 검색...'
+      },
+      en: {
+        utilDept: 'Dept. of Biotechnology',
+        headerLabName: 'Cell Function Regulation Lab',
+        menuHome: 'HOME',
+        menuProf: 'PROFESSOR',
+        menuResearch: 'RESEARCH',
+        menuMembers: 'MEMBERS',
+        menuPubs: 'PUBLICATIONS',
+        menuNews: 'NEWS & PRESS',
+        menuJoin: 'JOIN US',
+        menuContact: 'CONTACT',
+        homeBannerSub: 'Prof. Seungkwon You · Department of Biotechnology, Korea University',
+        homeBannerDesc: 'We investigate novel reprogramming factors and small molecules for iPSC and direct neural reprogramming (iNSC, iOPC, iNPC), cell-free stem cell secretome therapeutics, and modular nanogel/hydrogel delivery platforms.',
+        homeBtnResearch: 'Research Overview',
+        homeBtnPubs: 'Publications (35)',
+        homeBtnJoin: 'Open Positions',
+        viewProfProfile: 'View Full CV →',
+        homeResHeading: 'RESEARCH AREAS',
+        homeRecentPubs: 'RECENT PUBLICATIONS',
+        homeNoticeHeading: 'NEWS, AWARDS & PRESS',
+        homeJoinBoxTitle: 'OPEN POSITIONS',
+        homeJoinBoxDesc: 'We welcome motivated M.S./Ph.D. applicants, postdoctoral fellows, and undergraduate interns interested in cellular reprogramming, neural differentiation, and regenerative medicine.',
+        homeJoinGuideLink: 'Application Guide & FAQ →',
+        homeMapLink: 'Campus Map →',
+        fundingStripTitle: 'FUNDING AGENCIES & SUPPORTING INSTITUTIONS',
+        moreLink: 'MORE +',
+        profPageTitle: 'Principal Investigator',
+        profName: 'Prof. Seungkwon You',
+        profRole: 'Professor, Department of Biotechnology, Korea University',
+        profOfficeShort: 'Life Science West Bldg. Rm 314',
+        copyBtn: 'Copy',
+        tabEducation: 'Education',
+        tabCareer: 'Academic Career',
+        tabEditorial: 'Editorial & Advisory',
+        tabTeaching: 'Awards & Teaching',
+        researchPageTitle: 'Research, Grants & Patents',
+        researchIntroBox: 'The Laboratory of Cell Function Regulation (CFR Lab) at Korea University focuses on cellular reprogramming, lineage-specific neural differentiation, cell-free stem cell secretome therapeutics, polymer nanogel/hydrogel delivery, and patient-derived iPSC disease modeling.',
+        projSectionTitle: 'National R&D Grants & Registered Patents',
+        projTabAll: 'All',
+        projTabGrants: 'R&D Grants',
+        projTabPatents: 'Patents',
+        membersPageTitle: 'Lab Members',
+        teamStructureTitle: 'Researchers & Graduate Students',
+        membersJoinLink: 'Join Our Lab →',
+        teamStructureSub: 'Individual member names and photos can be added directly into LAB_DATA in this HTML file.',
+        pubsPageTitle: 'Publications',
+        exportBibLabel: 'Download Filtered BibTeX (.bib)',
+        pubsFullLink: 'View all 134 on KU Pure',
+        eraAll: 'All Years (2010–2026)',
+        era2426: '2024 – 2026',
+        era2023: '2020 – 2023',
+        era1419: '2014 – 2019',
+        era1013: '2010 – 2013',
+        corrOnlyLabel: 'Corresponding (*)',
+        resetFilter: 'Reset Filters',
+        newsPageTitle: 'Lab News, Press Coverage & Awards',
+        newsTabAll: 'All',
+        newsTabPress: 'Press',
+        newsTabAward: 'Awards',
+        newsTabPaper: 'Papers',
+        joinPageTitle: 'Join Us — Prospective Students & Postdocs',
+        joinTracksHeading: 'Open Tracks & Qualifications',
+        faqHeading: 'Prospective Student FAQ',
+        composerHeading: 'Application & Interview Inquiry',
+        composerSub: 'Fill out the fields below to launch a formatted email addressed to Prof. Seungkwon You (bioseung@korea.ac.kr).',
+        labelTrack: 'Inquiry Type',
+        optGrad: 'Graduate Program (M.S. / Ph.D. / Integrated)',
+        optUndergrad: 'Undergraduate Internship',
+        optPostdoc: 'Postdoctoral Fellowship',
+        optCollab: 'Research Collaboration',
+        labelName: 'Name / Affiliation',
+        labelInterest: 'Message',
+        openMailBtn: 'Open Email Client',
+        copyMailBtn: 'Copy Inquiry Text',
+        contactPageTitle: 'Contact & Campus Directions',
+        mapHeading: 'Campus Map (Life Science West Building, Korea University)',
+        visitGuideBtn: 'Official KU Directions',
+        locationHeading: 'Contact Information',
+        addrLabel: 'Address',
+        addrValue: '145 Anam-ro, Seongbuk-gu, Seoul 02841, Korea University (Life Science West Bldg.)',
+        roomLabel: 'Office / Labs',
+        roomValue: 'Office: West Bldg. Rm 314 · Labs: Rm 321, 325–328',
+        transitHeading: 'Public Transit Directions (Subway & Bus)',
+        subwayLabel: 'Subway (Line 6)',
+        busLabel: 'Bus Routes',
+        footerTitle: 'Laboratory of Cell Function Regulation (CFR Lab), Korea University',
+        footerAddr: '145 Anam-ro, Seongbuk-gu, Seoul 02841, Republic of Korea (Life Science West Bldg. Rm 314)',
+        modalHighlights: 'Key Research Highlights',
+        modalViewPubs: 'View Related Papers',
+        closeBtn: 'Close',
+        viewDetailsBtn: 'Details',
+        allCategories: 'All Topics',
+        noPubsFound: 'No matching publications found.',
+        searchPlaceholder: 'Search by title, author, journal, DOI, or year...'
+      }
+    };
+
+    const state = {
+      route: 'home',
+      lang: 'ko',
+      cvTab: 'education',
+      pubSearch: '',
+      pubCategory: 'all',
+      pubEra: 'all',
+      pubCorrOnly: false,
+      projTab: 'all',
+      newsTab: 'all',
+      openFaqIdx: 0,
+      activeModalPillar: null,
+      campusMap: null
+    };
+
+    function copyTextToClipboard(text, message) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast(message)).catch(() => fallbackCopy(text, message));
+      } else {
+        fallbackCopy(text, message);
+      }
+    }
+
+    function fallbackCopy(text, message) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast(message);
+      } catch (e) {
+        showToast(state.lang === 'ko' ? '복사에 실패했습니다.' : 'Copy failed.');
+      }
+      document.body.removeChild(ta);
+    }
+
+    function showToast(msg) {
+      const container = document.getElementById('toastContainer');
+      const el = document.createElement('div');
+      el.className = 'toast-enter pointer-events-auto mb-2 px-4 py-2 bg-[#222222] text-white text-xs font-medium shadow-md border border-zinc-700';
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.2s ease';
+        setTimeout(() => el.remove(), 200);
+      }, 2200);
+    }
+
+    function refreshIcons() {
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+    }
+
+    function formatBibTeX(pub) {
+      return `@article{${pub.id},\n  author  = {${pub.authors.replace(/\*/g, '')}},\n  title   = {${pub.title}},\n  journal = {${pub.journal}},\n  year    = {${pub.year}},${pub.doi ? `\n  doi     = {${pub.doi}},` : ''}\n  url     = {${pub.url}}\n}`;
+    }
+
+    function initCampusMap() {
+      const el = document.getElementById('kuCampusMap');
+      if (!el) return;
+      if (typeof window.L === 'undefined') {
+        el.innerHTML = '<div class="h-full flex items-center justify-center text-xs text-[#666666] p-6 text-center">고려대학교 자연계캠퍼스 생명과학관 서관 (37.588195° N, 127.034025° E)</div>';
+        return;
+      }
+      if (!state.campusMap) {
+        state.campusMap = window.L.map('kuCampusMap', { scrollWheelZoom: false }).setView([37.588195, 127.034025], 16);
+        window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri',
+          maxZoom: 19
+        }).addTo(state.campusMap);
+        window.L.marker([37.588195, 127.034025])
+          .addTo(state.campusMap)
+          .bindPopup('<strong>고려대학교 생명과학관 서관</strong><br/>세포기능조절실험실 (연구실 314호)')
+          .openPopup();
+      }
+      setTimeout(() => {
+        if (state.campusMap) state.campusMap.invalidateSize();
+      }, 120);
+    }
+
+    function navigateTo(route) {
+      const valid = ['home', 'professor', 'research', 'members', 'publications', 'news', 'join', 'contact'];
+      state.route = valid.includes(route) ? route : 'home';
+
+      document.querySelectorAll('.page-view').forEach(sec => {
+        sec.classList.toggle('hidden', sec.id !== `page-${state.route}`);
+      });
+
+      document.querySelectorAll('nav .nav-item').forEach(link => {
+        link.classList.toggle('active', link.getAttribute('data-route') === state.route);
+      });
+
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      if (state.route === 'contact') initCampusMap();
+      refreshIcons();
+    }
+
+    function applyStaticTranslations() {
+      const dict = I18N[state.lang];
+      document.documentElement.lang = state.lang;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key] !== undefined) el.textContent = dict[key];
+      });
+      document.getElementById('langToggleLabel').textContent = state.lang === 'ko' ? 'ENGLISH' : '한국어';
+      document.getElementById('pubSearchInput').placeholder = dict.searchPlaceholder;
+    }
+
+    function renderHomeSections() {
+      const l = state.lang;
+      const dict = I18N[l];
+
+      document.getElementById('homeResearchGrid').innerHTML = LAB_DATA.researchPillars.map(p => `
+        <div class="border border-[#E2E2E2] p-5 bg-white hover:border-ku-crimson transition-colors flex flex-col justify-between">
+          <div>
+            <div class="text-xs font-bold text-ku-crimson mb-1.5">${p.num}. ${p.tag[l]}</div>
+            <h3 class="text-[14.5px] font-bold text-[#111111] leading-snug mb-2.5">${p.title[l]}</h3>
+            <p class="text-[12.5px] text-[#555555] leading-relaxed mb-4">${p.shortDesc[l]}</p>
+          </div>
+          <button type="button" data-open-pillar="${p.id}" class="text-xs font-semibold text-ku-crimson hover:underline self-start cursor-pointer">
+            ${dict.viewDetailsBtn} →
+          </button>
+        </div>
+      `).join('');
+
+      document.getElementById('homeResearchGrid').querySelectorAll('[data-open-pillar]').forEach(btn => {
+        btn.addEventListener('click', () => openResearchModal(btn.getAttribute('data-open-pillar')));
+      });
+
+      document.getElementById('homeRecentPubList').innerHTML = LAB_DATA.publications.slice(0, 6).map(pub => `
+        <li class="py-3 first:pt-0 last:pb-0">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <a href="${pub.url}" target="_blank" rel="noopener noreferrer" class="text-[13.5px] font-semibold text-[#222222] hover:text-ku-crimson leading-snug block">
+                ${pub.title}
+              </a>
+              <div class="text-xs text-[#666666] mt-1">
+                <span class="font-semibold text-ku-crimson italic">${pub.journal}</span> · ${pub.details}
+              </div>
+            </div>
+            <span class="text-xs font-mono text-[#777777] shrink-0">${pub.year}</span>
+          </div>
+        </li>
+      `).join('');
+
+      document.getElementById('homeNoticeList').innerHTML = LAB_DATA.newsItems.slice(0, 5).map(n => `
+        <li class="py-2.5 first:pt-0 last:pb-0 flex items-start justify-between gap-3">
+          <a href="${n.url}" target="_blank" rel="noopener noreferrer" class="text-[#333333] hover:text-ku-crimson leading-snug min-w-0">
+            <span class="inline-block px-1.5 py-0.5 text-[10.5px] font-bold bg-[#FAF3F5] text-ku-crimson border border-[#EBCAD3] mr-1.5">${n.source}</span>
+            <span>${n[l]}</span>
+          </a>
+          <span class="text-[11px] text-[#888888] font-mono shrink-0 pt-0.5">${n.date.slice(0, 7)}</span>
+        </li>
+      `).join('');
+    }
+
+    function renderResearchCards() {
+      const grid = document.getElementById('researchCardsGrid');
+      const l = state.lang;
+      const dict = I18N[l];
+
+      grid.innerHTML = LAB_DATA.researchPillars.map(p => `
+        <article class="border border-[#DCDCDC] bg-white">
+          <div class="grid grid-cols-1 lg:grid-cols-12">
+            <div class="lg:col-span-8 p-6 sm:p-7">
+              <div class="text-xs font-bold text-ku-crimson mb-1.5">RESEARCH AREA ${p.num} · ${p.tag[l]}</div>
+              <h2 class="text-lg sm:text-xl font-bold text-[#111111] mb-3">${p.title[l]}</h2>
+              <p class="text-[14px] text-[#444444] leading-relaxed mb-4">${p.summary[l]}</p>
+              <ul class="space-y-1.5 text-[13px] text-[#333333] list-disc pl-5 mb-5">
+                ${p.highlights[l].map(h => `<li>${h}</li>`).join('')}
+              </ul>
+              <button type="button" data-open-pillar="${p.id}" class="px-3.5 py-1.5 border border-ku-crimson text-ku-crimson hover:bg-ku-crimson hover:text-white text-xs font-semibold transition-colors cursor-pointer">
+                ${dict.viewDetailsBtn}
+              </button>
+            </div>
+            <div class="research-fig-col lg:col-span-4 bg-[#F9F9F8] border-t lg:border-t-0 lg:border-l border-[#E2E2E2] p-5 flex flex-col justify-center">
+              ${p.figureUrl ? `
+                <div class="bg-white border border-[#DCDCDC] p-2">
+                  <img src="${p.figureUrl}" alt="${p.title[l]}" referrerpolicy="no-referrer" class="w-full h-44 object-contain bg-white" onerror="handleResearchFigureError(this, '${p.id}')" />
+                </div>
+                <p class="text-[11px] text-[#666666] mt-2 leading-snug">${p.figureCaption[l]}</p>
+              ` : `
+                <div class="text-xs text-[#444444] space-y-2">
+                  <div class="font-bold text-[#111111] border-b border-[#DCDCDC] pb-1.5">${l === 'ko' ? '핵심 키워드' : 'Research Keywords'}</div>
+                  <div class="flex flex-wrap gap-1.5 pt-1">
+                    ${p.keywords.map(k => `<span class="px-2 py-0.5 bg-white border border-[#DCDCDC] text-[11px] text-[#333333]">${k}</span>`).join('')}
+                  </div>
+                </div>
+              `}
+            </div>
+          </div>
+        </article>
+      `).join('');
+
+      grid.querySelectorAll('[data-open-pillar]').forEach(btn => {
+        btn.addEventListener('click', () => openResearchModal(btn.getAttribute('data-open-pillar')));
+      });
+    }
+
+    function openResearchModal(pillarId) {
+      const pillar = LAB_DATA.researchPillars.find(p => p.id === pillarId);
+      if (!pillar) return;
+      state.activeModalPillar = pillar;
+      const l = state.lang;
+      document.getElementById('modalTag').textContent = `RESEARCH AREA ${pillar.num} · ${pillar.tag[l]}`;
+      document.getElementById('modalTitle').textContent = pillar.title[l];
+      document.getElementById('modalSummary').textContent = pillar.summary[l];
+
+      const figWrap = document.getElementById('modalFigureWrap');
+      if (pillar.figureUrl) {
+        document.getElementById('modalImage').src = pillar.figureUrl;
+        document.getElementById('modalImage').alt = pillar.title[l];
+        document.getElementById('modalCaption').textContent = pillar.figureCaption[l];
+        figWrap.classList.remove('hidden');
+      } else {
+        figWrap.classList.add('hidden');
+      }
+
+      document.getElementById('modalBullets').innerHTML = pillar.highlights[l].map(h => `<li>${h}</li>`).join('');
+      document.getElementById('researchModal').classList.remove('hidden');
+      refreshIcons();
+    }
+
+    function closeResearchModal() {
+      document.getElementById('researchModal').classList.add('hidden');
+      state.activeModalPillar = null;
+    }
+
+    function renderCV() {
+      const panel = document.getElementById('cvContentPanel');
+      const l = state.lang;
+      const items = LAB_DATA.cv[state.cvTab] || [];
+
+      document.querySelectorAll('.cv-tab-btn').forEach(btn => {
+        const isActive = btn.getAttribute('data-cv-tab') === state.cvTab;
+        btn.className = isActive
+          ? 'cv-tab-btn px-4 py-2.5 text-sm font-bold border-b-2 border-ku-crimson text-ku-crimson cursor-pointer'
+          : 'cv-tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-[#666666] hover:text-[#111111] cursor-pointer';
+      });
+
+      panel.innerHTML = `
+        <table class="w-full text-[13.5px] board-table">
+          <thead>
+            <tr>
+              <th class="py-2.5 px-3.5 w-36 text-xs">${l === 'ko' ? '기간 / 구분' : 'Period / Area'}</th>
+              <th class="py-2.5 px-3.5 text-xs">${l === 'ko' ? '내용 및 기관' : 'Details'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(item => `
+              <tr>
+                <td class="py-3 px-3.5 font-mono text-xs font-semibold text-ku-crimson align-top whitespace-nowrap">${item.period}</td>
+                <td class="py-3 px-3.5 align-top">
+                  <div class="font-semibold text-[#111111]">${item.title[l]}</div>
+                  <div class="text-xs text-[#666666] mt-0.5">${item.org[l]}</div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function getFilteredPublications() {
+      const q = state.pubSearch.trim().toLowerCase();
+      return LAB_DATA.publications.filter(pub => {
+        const matchCat = state.pubCategory === 'all' || pub.category === state.pubCategory;
+        const matchEra = state.pubEra === 'all' || pub.era === state.pubEra;
+        const matchCorr = !state.pubCorrOnly || pub.corr;
+        const matchQuery = !q ||
+          pub.title.toLowerCase().includes(q) ||
+          pub.authors.toLowerCase().includes(q) ||
+          pub.journal.toLowerCase().includes(q) ||
+          (pub.doi && pub.doi.toLowerCase().includes(q)) ||
+          String(pub.year).includes(q);
+        return matchCat && matchEra && matchCorr && matchQuery;
+      });
+    }
+
+    function renderPublicationPills() {
+      const container = document.getElementById('pubCategoryPills');
+      const l = state.lang;
+      const cats = [
+        { key: 'all', label: I18N[l].allCategories },
+        { key: 'Reprogramming & Neural', label: l === 'ko' ? '역분화 · 신경전구세포' : 'Reprogramming & Neural' },
+        { key: 'Secretome & Cell-Free', label: l === 'ko' ? '분비분자 · 무세포재생' : 'Secretome & Cell-Free' },
+        { key: 'Nanogel & Biomaterials', label: l === 'ko' ? '나노젤 · 생체재료' : 'Nanogel & Biomaterials' },
+        { key: 'Disease Modeling & iPSC', label: l === 'ko' ? '질환모델링 · 환자 iPSC' : 'Disease Modeling & iPSC' }
+      ];
+
+      container.innerHTML = cats.map(c => {
+        const active = state.pubCategory === c.key;
+        return `
+          <button type="button" data-pub-cat="${c.key}" class="px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer ${
+            active ? 'bg-ku-crimson text-white' : 'bg-white border border-[#CCCCCC] text-[#555555] hover:border-ku-crimson hover:text-ku-crimson'
+          }">
+            ${c.label}
+          </button>
+        `;
+      }).join('');
+
+      container.querySelectorAll('[data-pub-cat]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.pubCategory = btn.getAttribute('data-pub-cat');
+          renderPublicationPills();
+          renderPublications();
+        });
+      });
+    }
+
+    function renderPublications() {
+      const container = document.getElementById('pubListContainer');
+      const status = document.getElementById('pubCountStatus');
+      const l = state.lang;
+      const dict = I18N[l];
+      const filtered = getFilteredPublications();
+
+      status.textContent = l === 'ko'
+        ? `선별 대표 SCI 논문 ${LAB_DATA.publications.length}편 중 ${filtered.length}편 표시 (KU Pure 전체 134편)`
+        : `Showing ${filtered.length} of ${LAB_DATA.publications.length} selected SCI publications (134 total on KU Pure)`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="p-10 text-center text-sm text-[#666666] border border-[#E2E2E2]">${dict.noPubsFound}</div>`;
+        return;
+      }
+
+      const byYear = {};
+      filtered.forEach(p => {
+        if (!byYear[p.year]) byYear[p.year] = [];
+        byYear[p.year].push(p);
+      });
+      const years = Object.keys(byYear).sort((a, b) => Number(b) - Number(a));
+
+      container.innerHTML = years.map(yr => `
+        <div>
+          <h3 class="text-base font-bold text-ku-crimson border-b-2 border-ku-crimson pb-1.5 mb-3 font-mono">${yr}</h3>
+          <ol class="divide-y divide-[#EAEAEA]">
+            ${byYear[yr].map(pub => {
+              const highlightedAuthors = pub.authors.replace(/(You S\*?)/g, '<strong class="text-[#111111] underline">$1</strong>');
+              return `
+                <li class="py-3.5 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[14.5px] font-bold text-[#111111] leading-snug mb-1">${pub.title}</div>
+                    <div class="text-xs text-[#555555] mb-1">${highlightedAuthors}</div>
+                    <div class="text-xs">
+                      <span class="font-semibold text-ku-crimson italic">${pub.journal}</span>,
+                      <span class="text-[#555555]">${pub.details}</span>
+                      ${pub.doi ? `<span class="text-[#888888] font-mono ml-1.5">DOI: ${pub.doi}</span>` : ''}
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5 shrink-0 pt-0.5">
+                    <button type="button" data-copy-apa="${pub.id}" class="px-2 py-1 border border-[#CCCCCC] bg-white hover:border-ku-crimson hover:text-ku-crimson text-[11px] font-semibold text-[#555555] cursor-pointer">APA</button>
+                    <button type="button" data-copy-bib="${pub.id}" class="px-2 py-1 border border-[#CCCCCC] bg-white hover:border-ku-crimson hover:text-ku-crimson text-[11px] font-semibold text-[#555555] cursor-pointer">BibTeX</button>
+                    <a href="${pub.url}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 bg-[#333333] hover:bg-ku-crimson text-white text-[11px] font-semibold transition-colors">Link</a>
+                  </div>
+                </li>
+              `;
+            }).join('')}
+          </ol>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('[data-copy-apa]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pub = LAB_DATA.publications.find(p => p.id === btn.getAttribute('data-copy-apa'));
+          if (!pub) return;
+          const apa = `${pub.authors} (${pub.year}). ${pub.title}. ${pub.journal}, ${pub.details}. ${pub.doi ? 'https://doi.org/' + pub.doi : pub.url}`;
+          copyTextToClipboard(apa, state.lang === 'ko' ? 'APA 인용 형식이 복사되었습니다.' : 'APA citation copied.');
+        });
+      });
+
+      container.querySelectorAll('[data-copy-bib]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pub = LAB_DATA.publications.find(p => p.id === btn.getAttribute('data-copy-bib'));
+          if (!pub) return;
+          copyTextToClipboard(formatBibTeX(pub), state.lang === 'ko' ? 'BibTeX 인용 형식이 복사되었습니다.' : 'BibTeX entry copied.');
+        });
+      });
+    }
+
+    function renderProjectsAndPatents() {
+      const grid = document.getElementById('projectsPatentsGrid');
+      const l = state.lang;
+
+      document.querySelectorAll('.proj-tab-btn').forEach(btn => {
+        const active = btn.getAttribute('data-proj-tab') === state.projTab;
+        btn.className = active
+          ? 'proj-tab-btn px-3.5 py-1.5 text-xs font-semibold bg-ku-crimson text-white cursor-pointer'
+          : 'proj-tab-btn px-3.5 py-1.5 text-xs font-semibold bg-[#F2F2F2] text-[#444444] hover:text-[#111111] cursor-pointer';
+      });
+
+      const items = LAB_DATA.projectsAndPatents.filter(item => state.projTab === 'all' || item.type === state.projTab);
+
+      grid.innerHTML = `
+        <table class="w-full text-[13.5px] board-table">
+          <thead>
+            <tr>
+              <th class="py-3 px-3.5 w-44 text-xs">${l === 'ko' ? '구분 / 기간' : 'Grant / Period'}</th>
+              <th class="py-3 px-3.5 text-xs">${l === 'ko' ? '과제명 / 특허명 및 주요 내용' : 'Title & Description'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(item => `
+              <tr>
+                <td class="py-4 px-3.5 align-top">
+                  <div class="text-[11px] font-bold ${item.type === 'grants' ? 'text-ku-crimson' : 'text-[#333333]'}">${item.badge[l]}</div>
+                  <div class="text-xs font-mono text-[#666666] mt-1">${item.period}</div>
+                </td>
+                <td class="py-4 px-3.5 align-top">
+                  <div class="font-bold text-[#111111] leading-snug mb-1.5">${item.title[l]}</div>
+                  <p class="text-xs text-[#555555] leading-relaxed">${item.desc[l]}</p>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderNewsBoard() {
+      const container = document.getElementById('newsBoardContainer');
+      const l = state.lang;
+
+      document.querySelectorAll('.news-tab-btn').forEach(btn => {
+        const active = btn.getAttribute('data-news-tab') === state.newsTab;
+        btn.className = active
+          ? 'news-tab-btn px-4 py-1.5 text-xs font-semibold bg-ku-crimson text-white cursor-pointer'
+          : 'news-tab-btn px-4 py-1.5 text-xs font-semibold bg-[#F2F2F2] text-[#444444] hover:text-[#111111] cursor-pointer';
+      });
+
+      const items = LAB_DATA.newsItems.filter(item => state.newsTab === 'all' || item.type === state.newsTab);
+
+      container.innerHTML = `
+        <table class="w-full text-[13.5px] board-table">
+          <thead>
+            <tr>
+              <th class="py-3 px-3.5 w-28 text-xs">${l === 'ko' ? '날짜' : 'Date'}</th>
+              <th class="py-3 px-3.5 w-28 text-xs">${l === 'ko' ? '출처' : 'Source'}</th>
+              <th class="py-3 px-3.5 text-xs">${l === 'ko' ? '제목' : 'Headline'}</th>
+              <th class="py-3 px-3.5 w-20 text-xs">${l === 'ko' ? '원문' : 'Link'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(item => `
+              <tr class="hover:bg-[#FAFAFA]">
+                <td class="py-3.5 px-3.5 font-mono text-xs text-[#666666] whitespace-nowrap">${item.date}</td>
+                <td class="py-3.5 px-3.5 text-xs font-semibold text-ku-crimson whitespace-nowrap">${item.source}</td>
+                <td class="py-3.5 px-3.5 font-medium text-[#111111]">
+                  <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="hover:text-ku-crimson hover:underline">${item[l]}</a>
+                </td>
+                <td class="py-3.5 px-3.5 text-xs">
+                  <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="text-[#555555] hover:text-ku-crimson underline">${l === 'ko' ? '보기' : 'Open'}</a>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderTeamRoles() {
+      const l = state.lang;
+      document.getElementById('teamRolesGrid').innerHTML = LAB_DATA.teamRoles.map(r => `
+        <div class="border border-[#E2E2E2] bg-[#FAFAFA] p-4">
+          <div class="text-xs font-bold text-ku-crimson">${r.role[l]}</div>
+          <div class="text-sm font-bold text-[#111111] mt-1">${r.name[l]}</div>
+          <p class="text-xs text-[#555555] mt-1.5 leading-relaxed">${r.desc[l]}</p>
+        </div>
+      `).join('');
+    }
+
+    function renderJoinPage() {
+      const l = state.lang;
+      document.getElementById('joinTracksGrid').innerHTML = LAB_DATA.joinTracks.map(tr => `
+        <div class="border border-[#DCDCDC] bg-white p-5">
+          <div class="text-sm font-bold text-ku-crimson mb-1">${tr.title[l]}</div>
+          <div class="text-xs text-[#666666] mb-3 pb-2.5 border-b border-[#EEEEEE]">${tr.dept[l]}</div>
+          <ul class="space-y-1.5 text-xs text-[#333333] list-disc pl-4 leading-relaxed">
+            ${tr.items[l].map(it => `<li>${it}</li>`).join('')}
+          </ul>
+        </div>
+      `).join('');
+
+      document.getElementById('faqContainer').innerHTML = LAB_DATA.faqs.map((f, idx) => {
+        const isOpen = state.openFaqIdx === idx;
+        return `
+          <div class="py-3.5">
+            <button type="button" data-faq-idx="${idx}" class="w-full text-left flex items-center justify-between gap-3 text-[13.5px] font-bold text-[#111111] hover:text-ku-crimson cursor-pointer">
+              <span>Q. ${f.q[l]}</span>
+              <span class="text-ku-crimson font-mono text-base shrink-0">${isOpen ? '−' : '+'}</span>
+            </button>
+            <div class="${isOpen ? 'block' : 'hidden'} mt-2.5 text-xs text-[#555555] leading-relaxed pl-4 border-l-2 border-ku-crimson/40">
+              ${f.a[l]}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('faqContainer').querySelectorAll('[data-faq-idx]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = Number(btn.getAttribute('data-faq-idx'));
+          state.openFaqIdx = state.openFaqIdx === i ? -1 : i;
+          renderJoinPage();
+        });
+      });
+    }
+
+    function getInquiryText() {
+      const l = state.lang;
+      const track = document.getElementById('inqTrack').value;
+      const name = document.getElementById('inqName').value.trim();
+      const interest = document.getElementById('inqInterest').value.trim();
+
+      const trackLabels = {
+        grad: { ko: '대학원 진학 문의', en: 'Graduate Program Inquiry' },
+        undergrad: { ko: '학부연구생 지원 문의', en: 'Undergraduate Internship Inquiry' },
+        postdoc: { ko: '박사후연구원(Postdoc) 지원 문의', en: 'Postdoctoral Fellowship Inquiry' },
+        collab: { ko: '공동연구 · 산학협력 문의', en: 'Research Collaboration Inquiry' }
+      };
+
+      const subj = l === 'ko'
+        ? `[고려대 CFR Lab] ${trackLabels[track].ko}${name ? ' - ' + name : ''}`
+        : `[Korea Univ. CFR Lab] ${trackLabels[track].en}${name ? ' - ' + name : ''}`;
+
+      const body = l === 'ko'
+        ? `유승권 교수님 안녕하십니까.\n\n${name ? name + '입니다.' : '고려대학교 세포기능조절실험실(CFR Lab)에 관심이 있어 연락드립니다.'}\n문의 구분: ${trackLabels[track].ko}\n\n${interest || '교수님 연구실의 세포 역분화 및 재생의학 연구에 관심이 있어 면담 및 지원 관련 문의를 드리고자 합니다.'}\n\n감사합니다.`
+        : `Dear Prof. Seungkwon You,\n\n${name ? 'My name is ' + name + '.' : 'I am writing to inquire about the Laboratory of Cell Function Regulation (CFR Lab).'}\nInquiry Type: ${trackLabels[track].en}\n\n${interest || 'I would like to inquire about research opportunities in your laboratory.'}\n\nBest regards,`;
+
+      return { subj, body };
+    }
+
+    function updateInquiryMailto() {
+      const { subj, body } = getInquiryText();
+      const mailto = `mailto:bioseung@korea.ac.kr?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+      document.getElementById('mailtoActionBtn').setAttribute('href', mailto);
+    }
+
+    function bindRouteLinks(root) {
+      (root || document).querySelectorAll('.route-link').forEach(link => {
+        if (link.getAttribute('data-bound') === '1') return;
+        link.setAttribute('data-bound', '1');
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = link.getAttribute('data-route');
+          if (target) {
+            window.location.hash = `#/${target}`;
+            navigateTo(target);
+            document.getElementById('mobileMenu').classList.add('hidden');
+            document.getElementById('mobileMenuBtn').setAttribute('aria-expanded', 'false');
+          }
+        });
+      });
+    }
+
+    function renderAll() {
+      applyStaticTranslations();
+      renderHomeSections();
+      renderResearchCards();
+      renderCV();
+      renderPublicationPills();
+      renderPublications();
+      renderProjectsAndPatents();
+      renderNewsBoard();
+      renderTeamRoles();
+      renderJoinPage();
+      updateInquiryMailto();
+      refreshIcons();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      bindRouteLinks(document);
+      renderAll();
+
+      const initHash = (window.location.hash || '').replace(/^#\/?/, '');
+      navigateTo(initHash || 'home');
+
+      window.addEventListener('hashchange', () => {
+        const h = (window.location.hash || '').replace(/^#\/?/, '');
+        if (h) navigateTo(h);
+      });
+
+      document.getElementById('langToggleBtn').addEventListener('click', () => {
+        state.lang = state.lang === 'ko' ? 'en' : 'ko';
+        renderAll();
+        if (state.activeModalPillar) openResearchModal(state.activeModalPillar.id);
+      });
+
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+      mobileMenuBtn.addEventListener('click', () => {
+        const isHidden = mobileMenu.classList.toggle('hidden');
+        mobileMenuBtn.setAttribute('aria-expanded', String(!isHidden));
+      });
+
+      document.getElementById('copyEmailBtn').addEventListener('click', () => {
+        copyTextToClipboard(
+          'bioseung@korea.ac.kr',
+          state.lang === 'ko' ? '이메일 주소(bioseung@korea.ac.kr)가 복사되었습니다.' : 'Email copied.'
+        );
+      });
+
+      document.querySelectorAll('.cv-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.cvTab = btn.getAttribute('data-cv-tab');
+          renderCV();
+        });
+      });
+
+      document.getElementById('pubSearchInput').addEventListener('input', (e) => {
+        state.pubSearch = e.target.value;
+        renderPublications();
+      });
+      document.getElementById('pubEraSelect').addEventListener('change', (e) => {
+        state.pubEra = e.target.value;
+        renderPublications();
+      });
+      document.getElementById('pubCorrOnly').addEventListener('change', (e) => {
+        state.pubCorrOnly = e.target.checked;
+        renderPublications();
+      });
+      document.getElementById('resetPubFilterBtn').addEventListener('click', () => {
+        state.pubSearch = '';
+        state.pubCategory = 'all';
+        state.pubEra = 'all';
+        state.pubCorrOnly = false;
+        document.getElementById('pubSearchInput').value = '';
+        document.getElementById('pubEraSelect').value = 'all';
+        document.getElementById('pubCorrOnly').checked = false;
+        renderPublicationPills();
+        renderPublications();
+      });
+
+      document.getElementById('exportBibBtn').addEventListener('click', () => {
+        const filtered = getFilteredPublications();
+        if (filtered.length === 0) {
+          showToast(state.lang === 'ko' ? '내보낼 논문이 없습니다.' : 'No publications to export.');
+          return;
+        }
+        const bibContent = filtered.map(formatBibTeX).join('\n\n');
+        const blob = new Blob([bibContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'CFR_Lab_Seungkwon_You_Publications.bib';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(state.lang === 'ko' ? `${filtered.length}편의 BibTeX(.bib) 파일이 다운로드되었습니다.` : `Downloaded ${filtered.length} BibTeX entries.`);
+      });
+
+      document.querySelectorAll('.proj-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.projTab = btn.getAttribute('data-proj-tab');
+          renderProjectsAndPatents();
+        });
+      });
+
+      document.querySelectorAll('.news-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.newsTab = btn.getAttribute('data-news-tab');
+          renderNewsBoard();
+        });
+      });
+
+      document.getElementById('closeModalBtn').addEventListener('click', closeResearchModal);
+      document.getElementById('modalCloseFooterBtn').addEventListener('click', closeResearchModal);
+      document.getElementById('researchModal').addEventListener('click', (e) => {
+        if (e.target.id === 'researchModal') closeResearchModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && state.activeModalPillar) closeResearchModal();
+      });
+      document.getElementById('modalFilterPubsBtn').addEventListener('click', () => {
+        if (state.activeModalPillar) {
+          state.pubCategory = state.activeModalPillar.categoryKey;
+          state.pubEra = 'all';
+          state.pubSearch = '';
+          state.pubCorrOnly = false;
+          document.getElementById('pubSearchInput').value = '';
+          document.getElementById('pubEraSelect').value = 'all';
+          document.getElementById('pubCorrOnly').checked = false;
+          renderPublicationPills();
+          renderPublications();
+          closeResearchModal();
+          window.location.hash = '#/publications';
+          navigateTo('publications');
+        }
+      });
+
+      ['inqTrack', 'inqName', 'inqInterest'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateInquiryMailto);
+        document.getElementById(id).addEventListener('change', updateInquiryMailto);
+      });
+
+      document.getElementById('copyInquiryBtn').addEventListener('click', () => {
+        const { subj, body } = getInquiryText();
+        copyTextToClipboard(
+          `${subj}\n\n${body}`,
+          state.lang === 'ko' ? '문의 메일 내용이 복사되었습니다.' : 'Inquiry text copied.'
+        );
+      });
+    });
+  </script>
+</body>
+</html>
